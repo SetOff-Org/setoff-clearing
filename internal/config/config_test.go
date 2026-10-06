@@ -72,3 +72,32 @@ func TestExampleConfigLoads(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// Keys identify callers, so they must be unambiguous: a shared key would let
+// one participant act as another, or as the operator.
+func TestKeysMustBeUnambiguous(t *testing.T) {
+	c, err := Load(write(t, valid))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("OP_KEY", "k-op")
+	t.Setenv("KEY_NG", "same")
+	t.Setenv("KEY_US", "same")
+	if _, _, _, err := c.Keys(); err == nil || !strings.Contains(err.Error(), "share a key") {
+		t.Fatalf("two participants with one key: %v", err)
+	}
+	t.Setenv("KEY_US", "k-op")
+	if _, _, _, err := c.Keys(); err == nil || !strings.Contains(err.Error(), "operator") {
+		t.Fatalf("a participant holding the operator key: %v", err)
+	}
+
+	dup, err := Load(write(t, valid+"\n[[participant]]\nid = \"anchor-ng\"\nkey_env = \"KEY_X\"\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KEY_US", "k-us")
+	t.Setenv("KEY_X", "k-x")
+	if _, _, _, err := dup.Keys(); err == nil || !strings.Contains(err.Error(), "listed twice") {
+		t.Fatalf("a participant listed twice: %v", err)
+	}
+}

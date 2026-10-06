@@ -47,20 +47,37 @@ func Load(path string) (*Config, error) {
 
 // Keys reads every key from the environment. It returns the participant
 // keys (key -> participant id), the participant ids, and the operator key.
+//
+// Keys are how callers are identified, so each must belong to exactly one
+// party: a shared key would let one participant act as another, or as the
+// operator.
 func (c *Config) Keys() (map[string]string, []string, string, error) {
-	keys := map[string]string{}
-	var ids []string
-	for _, p := range c.Participants {
-		k := os.Getenv(p.KeyEnv)
-		if k == "" {
-			return nil, nil, "", fmt.Errorf("participant %s: $%s is empty", p.ID, p.KeyEnv)
-		}
-		keys[k] = p.ID
-		ids = append(ids, p.ID)
-	}
 	op := os.Getenv(c.OperatorKeyEnv)
 	if op == "" {
 		return nil, nil, "", fmt.Errorf("$%s is empty", c.OperatorKeyEnv)
+	}
+	keys := map[string]string{}
+	seen := map[string]bool{}
+	var ids []string
+	for _, p := range c.Participants {
+		if p.ID == "" {
+			return nil, nil, "", fmt.Errorf("a participant has no id")
+		}
+		if seen[p.ID] {
+			return nil, nil, "", fmt.Errorf("participant %s is listed twice", p.ID)
+		}
+		seen[p.ID] = true
+		k := os.Getenv(p.KeyEnv)
+		switch {
+		case k == "":
+			return nil, nil, "", fmt.Errorf("participant %s: $%s is empty", p.ID, p.KeyEnv)
+		case k == op:
+			return nil, nil, "", fmt.Errorf("participant %s holds the operator key", p.ID)
+		case keys[k] != "":
+			return nil, nil, "", fmt.Errorf("participants %s and %s share a key", keys[k], p.ID)
+		}
+		keys[k] = p.ID
+		ids = append(ids, p.ID)
 	}
 	return keys, ids, op, nil
 }
