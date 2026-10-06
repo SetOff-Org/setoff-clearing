@@ -44,3 +44,9 @@ address = "GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B"
 [decimals]
 USDC = 7
 EURC = 7
+
+# Told about every closed window with a signed POST (optional). Receivers
+# verify X-SetOff-Signature: sha256=HMAC(secret, "<X-SetOff-Timestamp>.<body>").
+[webhook]
+url = "https://treasury.example.org/setoff"
+secret_env = "SETOFF_WEBHOOK_SECRET"

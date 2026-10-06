@@ -32,6 +32,11 @@ type Config struct {
 	// CloseEvery closes the open window on a schedule, e.g. "1h". Empty
 	// windows are skipped. Unset: only the operator closes windows.
 	CloseEvery Duration `toml:"close_every"`
+	// Webhook, if set, is told about every closed window.
+	Webhook struct {
+		URL       string `toml:"url"`
+		SecretEnv string `toml:"secret_env"`
+	} `toml:"webhook"`
 	// Tokens maps each asset to its SEP-41 token contract on chain.
 	Tokens       map[string]string `toml:"tokens"`
 	Participants []Participant     `toml:"participant"`

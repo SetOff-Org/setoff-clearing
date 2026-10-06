@@ -23,6 +23,7 @@ import (
 	"github.com/SetOff-Org/setoff-clearing/internal/clearing"
 	"github.com/SetOff-Org/setoff-clearing/internal/config"
 	"github.com/SetOff-Org/setoff-clearing/internal/netting"
+	"github.com/SetOff-Org/setoff-clearing/internal/webhook"
 )
 
 var version = "dev"
@@ -182,6 +183,11 @@ func runServe(args []string) error {
 		defer cancel()
 		_ = srv.Shutdown(shutdown)
 	}()
+	notify, err := notifier(cfg, logger)
+	if err != nil {
+		return err
+	}
+	s.OnClose = notify
 	if every := cfg.CloseEvery.Duration; every > 0 {
 		go store.AutoClose(ctx, every, func(w *clearing.Closed, err error) {
 			if err != nil {
@@ -189,6 +195,7 @@ func runServe(args []string) error {
 				return
 			}
 			logger.Info("closed window", "window", w.Window, "obligations", len(w.Obligations), "transfers", len(w.Netting.Transfers))
+			notify(w)
 		})
 	}
 	logger.Info("serving", "addr", cfg.Listen, "participants", len(ids), "close_every", cfg.CloseEvery.String())
@@ -196,4 +203,30 @@ func runServe(args []string) error {
 		return err
 	}
 	return nil
+}
+
+// notifier returns the close hook: a signed webhook delivery when configured,
+// otherwise nothing.
+func notifier(cfg *config.Config, logger *slog.Logger) (func(*clearing.Closed), error) {
+	if cfg.Webhook.URL == "" {
+		return func(*clearing.Closed) {}, nil
+	}
+	secret := os.Getenv(cfg.Webhook.SecretEnv)
+	if secret == "" {
+		return nil, fmt.Errorf("webhook: $%s is empty", cfg.Webhook.SecretEnv)
+	}
+	n := webhook.New(cfg.Webhook.URL, []byte(secret))
+	return func(w *clearing.Closed) {
+		event := map[string]any{
+			"type": "window.closed", "window": w.Window, "closed_at": w.ClosedAt,
+			"obligations": len(w.Obligations), "assets": w.Netting.Assets,
+		}
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+			if err := n.Send(ctx, event); err != nil {
+				logger.Error("webhook", "window", w.Window, "err", err)
+			}
+		}()
+	}, nil
 }

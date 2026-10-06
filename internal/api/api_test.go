@@ -262,3 +262,25 @@ func TestOpenAPICoversEveryRoute(t *testing.T) {
 		}
 	}
 }
+
+func TestClosingNotifies(t *testing.T) {
+	c, err := clearing.Open(t.TempDir(), []string{"anchor-a", "anchor-b", "anchor-c"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	notified := make(chan uint64, 1)
+	s := &api.Server{
+		Clearing: c, Participants: keys, OperatorKey: "op",
+		Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Now: time.Now,
+		OnClose: func(w *clearing.Closed) { notified <- w.Window },
+	}
+	srv := httptest.NewServer(s.Handler())
+	defer srv.Close()
+	call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "1", "5"))
+	if code, _ := call(t, srv, "POST", "/v1/window/close", "op", nil); code != http.StatusOK {
+		t.Fatal(code)
+	}
+	if w := <-notified; w != 1 {
+		t.Fatalf("notified about window %d", w)
+	}
+}

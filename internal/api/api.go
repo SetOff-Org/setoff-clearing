@@ -22,7 +22,8 @@ type Server struct {
 	OperatorKey  string
 	Log          *slog.Logger
 	Now          func() time.Time
-	Decimals     map[string]int // per asset, for reports
+	Decimals     map[string]int         // per asset, for reports
+	OnClose      func(*clearing.Closed) // called after each close, if set
 	Metrics      Metrics
 }
 
@@ -161,6 +162,9 @@ func (s *Server) close(w http.ResponseWriter, r *http.Request) {
 		s.Log.Error("close", "err", err)
 		reply(w, http.StatusInternalServerError, errBody(err.Error()))
 		return
+	}
+	if s.OnClose != nil {
+		s.OnClose(closed)
 	}
 	reply(w, http.StatusOK, closed)
 }
