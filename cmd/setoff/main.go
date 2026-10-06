@@ -14,15 +14,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"text/tabwriter"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/SetOff-Org/setoff-clearing/internal/api"
 	"github.com/SetOff-Org/setoff-clearing/internal/clearing"
+	"github.com/SetOff-Org/setoff-clearing/internal/config"
 	"github.com/SetOff-Org/setoff-clearing/internal/netting"
 )
 
@@ -135,48 +134,18 @@ func pct(bps int64) string {
 	return new(big.Rat).SetFrac64(bps, 100).FloatString(2)
 }
 
-type config struct {
-	Listen         string `toml:"listen"`
-	DataDir        string `toml:"data_dir"`
-	OperatorKeyEnv string `toml:"operator_key_env"`
-	Participants   []struct {
-		ID     string `toml:"id"`
-		KeyEnv string `toml:"key_env"`
-	} `toml:"participant"`
-}
-
 func runServe(args []string) error {
 	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	path := fs.String("config", "setoff.toml", "config file")
 	_ = fs.Parse(args)
 
-	var cfg config
-	md, err := toml.DecodeFile(*path, &cfg)
+	cfg, err := config.Load(*path)
 	if err != nil {
 		return err
 	}
-	if und := md.Undecoded(); len(und) > 0 {
-		return fmt.Errorf("%s: unknown keys %v", *path, und)
-	}
-	if cfg.Listen == "" {
-		cfg.Listen = "127.0.0.1:7500"
-	}
-	if !filepath.IsAbs(cfg.DataDir) {
-		cfg.DataDir = filepath.Join(filepath.Dir(*path), cfg.DataDir)
-	}
-	keys := map[string]string{}
-	var ids []string
-	for _, p := range cfg.Participants {
-		k := os.Getenv(p.KeyEnv)
-		if k == "" {
-			return fmt.Errorf("participant %s: $%s is empty", p.ID, p.KeyEnv)
-		}
-		keys[k] = p.ID
-		ids = append(ids, p.ID)
-	}
-	op := os.Getenv(cfg.OperatorKeyEnv)
-	if op == "" {
-		return fmt.Errorf("$%s is empty", cfg.OperatorKeyEnv)
+	keys, ids, op, err := cfg.Keys()
+	if err != nil {
+		return err
 	}
 	store, err := clearing.Open(cfg.DataDir, ids)
 	if err != nil {

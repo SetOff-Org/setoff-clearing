@@ -1,0 +1,22 @@
+# SetOff clearing service configuration.
+listen = "127.0.0.1:7500"
+
+# Journals and archived windows. Relative to this file.
+data_dir = "data"
+
+# Bearer key the operator uses to close windows.
+operator_key_env = "SETOFF_OPERATOR_KEY"
+
+# Every participant and the environment variable holding its API key. A
+# participant can only record obligations it owes.
+[[participant]]
+id = "anchor-ng"
+key_env = "SETOFF_KEY_ANCHOR_NG"
+
+[[participant]]
+id = "anchor-us"
+key_env = "SETOFF_KEY_ANCHOR_US"
+
+[[participant]]
+id = "anchor-ke"
+key_env = "SETOFF_KEY_ANCHOR_KE"
