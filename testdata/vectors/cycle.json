@@ -1,0 +1,40 @@
+{
+  "name": "cycle",
+  "description": "Three participants owe each other the same amount in a ring: everything cancels.",
+  "obligations": [
+    {
+      "id": "1",
+      "debtor": "A",
+      "creditor": "B",
+      "asset": "USDC",
+      "amount": "100"
+    },
+    {
+      "id": "2",
+      "debtor": "B",
+      "creditor": "C",
+      "asset": "USDC",
+      "amount": "100"
+    },
+    {
+      "id": "3",
+      "debtor": "C",
+      "creditor": "A",
+      "asset": "USDC",
+      "amount": "100"
+    }
+  ],
+  "netting": {
+    "positions": [],
+    "transfers": [],
+    "assets": [
+      {
+        "asset": "USDC",
+        "obligations": 3,
+        "gross": "300",
+        "settled": "0",
+        "transfers": 0
+      }
+    ]
+  }
+}

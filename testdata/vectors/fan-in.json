@@ -1,0 +1,116 @@
+{
+  "name": "fan-in",
+  "description": "Many payers, one payee: netting cannot help, and says so.",
+  "obligations": [
+    {
+      "id": "0",
+      "debtor": "payer-0",
+      "creditor": "merchant",
+      "asset": "USDC",
+      "amount": "10"
+    },
+    {
+      "id": "1",
+      "debtor": "payer-1",
+      "creditor": "merchant",
+      "asset": "USDC",
+      "amount": "20"
+    },
+    {
+      "id": "2",
+      "debtor": "payer-2",
+      "creditor": "merchant",
+      "asset": "USDC",
+      "amount": "30"
+    },
+    {
+      "id": "3",
+      "debtor": "payer-3",
+      "creditor": "merchant",
+      "asset": "USDC",
+      "amount": "40"
+    },
+    {
+      "id": "4",
+      "debtor": "payer-4",
+      "creditor": "merchant",
+      "asset": "USDC",
+      "amount": "50"
+    }
+  ],
+  "netting": {
+    "positions": [
+      {
+        "asset": "USDC",
+        "participant": "merchant",
+        "net": "150"
+      },
+      {
+        "asset": "USDC",
+        "participant": "payer-0",
+        "net": "-10"
+      },
+      {
+        "asset": "USDC",
+        "participant": "payer-1",
+        "net": "-20"
+      },
+      {
+        "asset": "USDC",
+        "participant": "payer-2",
+        "net": "-30"
+      },
+      {
+        "asset": "USDC",
+        "participant": "payer-3",
+        "net": "-40"
+      },
+      {
+        "asset": "USDC",
+        "participant": "payer-4",
+        "net": "-50"
+      }
+    ],
+    "transfers": [
+      {
+        "asset": "USDC",
+        "from": "payer-0",
+        "to": "merchant",
+        "amount": "10"
+      },
+      {
+        "asset": "USDC",
+        "from": "payer-1",
+        "to": "merchant",
+        "amount": "20"
+      },
+      {
+        "asset": "USDC",
+        "from": "payer-2",
+        "to": "merchant",
+        "amount": "30"
+      },
+      {
+        "asset": "USDC",
+        "from": "payer-3",
+        "to": "merchant",
+        "amount": "40"
+      },
+      {
+        "asset": "USDC",
+        "from": "payer-4",
+        "to": "merchant",
+        "amount": "50"
+      }
+    ],
+    "assets": [
+      {
+        "asset": "USDC",
+        "obligations": 5,
+        "gross": "150",
+        "settled": "150",
+        "transfers": 5
+      }
+    ]
+  }
+}

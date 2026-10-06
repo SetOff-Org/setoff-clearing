@@ -1,0 +1,51 @@
+{
+  "name": "bilateral",
+  "description": "Two participants owe each other; only the difference moves.",
+  "obligations": [
+    {
+      "id": "1",
+      "debtor": "A",
+      "creditor": "B",
+      "asset": "USDC",
+      "amount": "100"
+    },
+    {
+      "id": "2",
+      "debtor": "B",
+      "creditor": "A",
+      "asset": "USDC",
+      "amount": "60"
+    }
+  ],
+  "netting": {
+    "positions": [
+      {
+        "asset": "USDC",
+        "participant": "A",
+        "net": "-40"
+      },
+      {
+        "asset": "USDC",
+        "participant": "B",
+        "net": "40"
+      }
+    ],
+    "transfers": [
+      {
+        "asset": "USDC",
+        "from": "A",
+        "to": "B",
+        "amount": "40"
+      }
+    ],
+    "assets": [
+      {
+        "asset": "USDC",
+        "obligations": 2,
+        "gross": "160",
+        "settled": "40",
+        "transfers": 1
+      }
+    ]
+  }
+}

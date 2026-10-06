@@ -1,0 +1,120 @@
+{
+  "name": "remittance-corridor",
+  "description": "Anchors in a corridor with unequal flows in two assets.",
+  "obligations": [
+    {
+      "id": "1",
+      "debtor": "anchor-ng",
+      "creditor": "anchor-us",
+      "asset": "USDC",
+      "amount": "5000000000"
+    },
+    {
+      "id": "2",
+      "debtor": "anchor-us",
+      "creditor": "anchor-ng",
+      "asset": "USDC",
+      "amount": "3200000000"
+    },
+    {
+      "id": "3",
+      "debtor": "anchor-ng",
+      "creditor": "anchor-ke",
+      "asset": "USDC",
+      "amount": "1100000000"
+    },
+    {
+      "id": "4",
+      "debtor": "anchor-ke",
+      "creditor": "anchor-us",
+      "asset": "USDC",
+      "amount": "900000000"
+    },
+    {
+      "id": "5",
+      "debtor": "anchor-us",
+      "creditor": "anchor-ke",
+      "asset": "USDC",
+      "amount": "1250000000"
+    },
+    {
+      "id": "6",
+      "debtor": "anchor-eu",
+      "creditor": "anchor-ng",
+      "asset": "EURC",
+      "amount": "700000000"
+    },
+    {
+      "id": "7",
+      "debtor": "anchor-ng",
+      "creditor": "anchor-eu",
+      "asset": "EURC",
+      "amount": "650000000"
+    }
+  ],
+  "netting": {
+    "positions": [
+      {
+        "asset": "EURC",
+        "participant": "anchor-eu",
+        "net": "-50000000"
+      },
+      {
+        "asset": "EURC",
+        "participant": "anchor-ng",
+        "net": "50000000"
+      },
+      {
+        "asset": "USDC",
+        "participant": "anchor-ke",
+        "net": "1450000000"
+      },
+      {
+        "asset": "USDC",
+        "participant": "anchor-ng",
+        "net": "-2900000000"
+      },
+      {
+        "asset": "USDC",
+        "participant": "anchor-us",
+        "net": "1450000000"
+      }
+    ],
+    "transfers": [
+      {
+        "asset": "EURC",
+        "from": "anchor-eu",
+        "to": "anchor-ng",
+        "amount": "50000000"
+      },
+      {
+        "asset": "USDC",
+        "from": "anchor-ng",
+        "to": "anchor-ke",
+        "amount": "1450000000"
+      },
+      {
+        "asset": "USDC",
+        "from": "anchor-ng",
+        "to": "anchor-us",
+        "amount": "1450000000"
+      }
+    ],
+    "assets": [
+      {
+        "asset": "EURC",
+        "obligations": 2,
+        "gross": "1350000000",
+        "settled": "50000000",
+        "transfers": 1
+      },
+      {
+        "asset": "USDC",
+        "obligations": 5,
+        "gross": "11450000000",
+        "settled": "2900000000",
+        "transfers": 2
+      }
+    ]
+  }
+}

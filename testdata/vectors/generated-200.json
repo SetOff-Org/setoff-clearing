@@ -1,0 +1,1680 @@
+{
+  "name": "generated-200",
+  "description": "200 pseudo-random obligations among 12 participants in two assets.",
+  "obligations": [
+    {
+      "id": "ob-000",
+      "debtor": "P10",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "76950400"
+    },
+    {
+      "id": "ob-001",
+      "debtor": "P02",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "39471100"
+    },
+    {
+      "id": "ob-002",
+      "debtor": "P02",
+      "creditor": "P01",
+      "asset": "EURC",
+      "amount": "80239100"
+    },
+    {
+      "id": "ob-003",
+      "debtor": "P06",
+      "creditor": "P09",
+      "asset": "EURC",
+      "amount": "39231000"
+    },
+    {
+      "id": "ob-004",
+      "debtor": "P10",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "31034500"
+    },
+    {
+      "id": "ob-005",
+      "debtor": "P05",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "4789600"
+    },
+    {
+      "id": "ob-006",
+      "debtor": "P04",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "72362300"
+    },
+    {
+      "id": "ob-007",
+      "debtor": "P00",
+      "creditor": "P05",
+      "asset": "USDC",
+      "amount": "18422700"
+    },
+    {
+      "id": "ob-008",
+      "debtor": "P04",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "96711300"
+    },
+    {
+      "id": "ob-009",
+      "debtor": "P09",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "88459400"
+    },
+    {
+      "id": "ob-010",
+      "debtor": "P06",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "79103200"
+    },
+    {
+      "id": "ob-011",
+      "debtor": "P07",
+      "creditor": "P03",
+      "asset": "USDC",
+      "amount": "86154800"
+    },
+    {
+      "id": "ob-012",
+      "debtor": "P10",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "72920800"
+    },
+    {
+      "id": "ob-013",
+      "debtor": "P05",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "80382400"
+    },
+    {
+      "id": "ob-014",
+      "debtor": "P01",
+      "creditor": "P02",
+      "asset": "EURC",
+      "amount": "14202900"
+    },
+    {
+      "id": "ob-015",
+      "debtor": "P07",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "60557900"
+    },
+    {
+      "id": "ob-016",
+      "debtor": "P09",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "49174500"
+    },
+    {
+      "id": "ob-017",
+      "debtor": "P08",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "50419700"
+    },
+    {
+      "id": "ob-018",
+      "debtor": "P08",
+      "creditor": "P00",
+      "asset": "EURC",
+      "amount": "88562100"
+    },
+    {
+      "id": "ob-019",
+      "debtor": "P08",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "18832700"
+    },
+    {
+      "id": "ob-020",
+      "debtor": "P02",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "13352000"
+    },
+    {
+      "id": "ob-021",
+      "debtor": "P00",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "50057400"
+    },
+    {
+      "id": "ob-022",
+      "debtor": "P02",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "51227900"
+    },
+    {
+      "id": "ob-023",
+      "debtor": "P07",
+      "creditor": "P00",
+      "asset": "EURC",
+      "amount": "66675500"
+    },
+    {
+      "id": "ob-024",
+      "debtor": "P00",
+      "creditor": "P05",
+      "asset": "USDC",
+      "amount": "87519400"
+    },
+    {
+      "id": "ob-025",
+      "debtor": "P09",
+      "creditor": "P08",
+      "asset": "EURC",
+      "amount": "28384500"
+    },
+    {
+      "id": "ob-026",
+      "debtor": "P00",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "27952600"
+    },
+    {
+      "id": "ob-027",
+      "debtor": "P06",
+      "creditor": "P10",
+      "asset": "EURC",
+      "amount": "70455900"
+    },
+    {
+      "id": "ob-028",
+      "debtor": "P05",
+      "creditor": "P03",
+      "asset": "USDC",
+      "amount": "87439900"
+    },
+    {
+      "id": "ob-029",
+      "debtor": "P08",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "1581400"
+    },
+    {
+      "id": "ob-030",
+      "debtor": "P02",
+      "creditor": "P07",
+      "asset": "EURC",
+      "amount": "96576200"
+    },
+    {
+      "id": "ob-031",
+      "debtor": "P03",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "64589300"
+    },
+    {
+      "id": "ob-032",
+      "debtor": "P11",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "52448600"
+    },
+    {
+      "id": "ob-033",
+      "debtor": "P11",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "68029100"
+    },
+    {
+      "id": "ob-034",
+      "debtor": "P02",
+      "creditor": "P00",
+      "asset": "EURC",
+      "amount": "68716500"
+    },
+    {
+      "id": "ob-035",
+      "debtor": "P05",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "90737900"
+    },
+    {
+      "id": "ob-036",
+      "debtor": "P03",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "4824100"
+    },
+    {
+      "id": "ob-037",
+      "debtor": "P06",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "60807800"
+    },
+    {
+      "id": "ob-038",
+      "debtor": "P08",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "7054800"
+    },
+    {
+      "id": "ob-039",
+      "debtor": "P04",
+      "creditor": "P08",
+      "asset": "USDC",
+      "amount": "56666400"
+    },
+    {
+      "id": "ob-040",
+      "debtor": "P09",
+      "creditor": "P08",
+      "asset": "EURC",
+      "amount": "28414500"
+    },
+    {
+      "id": "ob-041",
+      "debtor": "P11",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "6001700"
+    },
+    {
+      "id": "ob-042",
+      "debtor": "P10",
+      "creditor": "P02",
+      "asset": "EURC",
+      "amount": "90611600"
+    },
+    {
+      "id": "ob-043",
+      "debtor": "P04",
+      "creditor": "P05",
+      "asset": "USDC",
+      "amount": "14504600"
+    },
+    {
+      "id": "ob-044",
+      "debtor": "P05",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "74897100"
+    },
+    {
+      "id": "ob-045",
+      "debtor": "P08",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "41485000"
+    },
+    {
+      "id": "ob-046",
+      "debtor": "P01",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "49000900"
+    },
+    {
+      "id": "ob-047",
+      "debtor": "P05",
+      "creditor": "P04",
+      "asset": "EURC",
+      "amount": "30452600"
+    },
+    {
+      "id": "ob-048",
+      "debtor": "P08",
+      "creditor": "P05",
+      "asset": "EURC",
+      "amount": "37555300"
+    },
+    {
+      "id": "ob-049",
+      "debtor": "P02",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "81621400"
+    },
+    {
+      "id": "ob-050",
+      "debtor": "P04",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "99484100"
+    },
+    {
+      "id": "ob-051",
+      "debtor": "P11",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "16300200"
+    },
+    {
+      "id": "ob-052",
+      "debtor": "P08",
+      "creditor": "P06",
+      "asset": "EURC",
+      "amount": "44593100"
+    },
+    {
+      "id": "ob-053",
+      "debtor": "P10",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "89185000"
+    },
+    {
+      "id": "ob-054",
+      "debtor": "P03",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "34563300"
+    },
+    {
+      "id": "ob-055",
+      "debtor": "P09",
+      "creditor": "P11",
+      "asset": "EURC",
+      "amount": "87319800"
+    },
+    {
+      "id": "ob-056",
+      "debtor": "P04",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "38398600"
+    },
+    {
+      "id": "ob-057",
+      "debtor": "P07",
+      "creditor": "P08",
+      "asset": "EURC",
+      "amount": "6270700"
+    },
+    {
+      "id": "ob-058",
+      "debtor": "P11",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "52740200"
+    },
+    {
+      "id": "ob-059",
+      "debtor": "P02",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "55643300"
+    },
+    {
+      "id": "ob-060",
+      "debtor": "P09",
+      "creditor": "P03",
+      "asset": "EURC",
+      "amount": "28918500"
+    },
+    {
+      "id": "ob-061",
+      "debtor": "P08",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "73582600"
+    },
+    {
+      "id": "ob-062",
+      "debtor": "P03",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "54552800"
+    },
+    {
+      "id": "ob-063",
+      "debtor": "P03",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "93194200"
+    },
+    {
+      "id": "ob-064",
+      "debtor": "P10",
+      "creditor": "P02",
+      "asset": "EURC",
+      "amount": "73621100"
+    },
+    {
+      "id": "ob-065",
+      "debtor": "P03",
+      "creditor": "P02",
+      "asset": "EURC",
+      "amount": "23253600"
+    },
+    {
+      "id": "ob-066",
+      "debtor": "P09",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "90801900"
+    },
+    {
+      "id": "ob-067",
+      "debtor": "P06",
+      "creditor": "P07",
+      "asset": "EURC",
+      "amount": "59319100"
+    },
+    {
+      "id": "ob-068",
+      "debtor": "P06",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "81912200"
+    },
+    {
+      "id": "ob-069",
+      "debtor": "P08",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "50591000"
+    },
+    {
+      "id": "ob-070",
+      "debtor": "P00",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "97949700"
+    },
+    {
+      "id": "ob-071",
+      "debtor": "P01",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "94685100"
+    },
+    {
+      "id": "ob-072",
+      "debtor": "P03",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "76169700"
+    },
+    {
+      "id": "ob-073",
+      "debtor": "P01",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "32772400"
+    },
+    {
+      "id": "ob-074",
+      "debtor": "P07",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "49938900"
+    },
+    {
+      "id": "ob-075",
+      "debtor": "P08",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "98903800"
+    },
+    {
+      "id": "ob-076",
+      "debtor": "P00",
+      "creditor": "P07",
+      "asset": "EURC",
+      "amount": "6362900"
+    },
+    {
+      "id": "ob-077",
+      "debtor": "P11",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "24440200"
+    },
+    {
+      "id": "ob-078",
+      "debtor": "P08",
+      "creditor": "P00",
+      "asset": "EURC",
+      "amount": "1074600"
+    },
+    {
+      "id": "ob-079",
+      "debtor": "P10",
+      "creditor": "P08",
+      "asset": "USDC",
+      "amount": "63572900"
+    },
+    {
+      "id": "ob-080",
+      "debtor": "P07",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "20452000"
+    },
+    {
+      "id": "ob-081",
+      "debtor": "P09",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "2524300"
+    },
+    {
+      "id": "ob-082",
+      "debtor": "P03",
+      "creditor": "P02",
+      "asset": "EURC",
+      "amount": "44251900"
+    },
+    {
+      "id": "ob-083",
+      "debtor": "P09",
+      "creditor": "P05",
+      "asset": "USDC",
+      "amount": "93076600"
+    },
+    {
+      "id": "ob-084",
+      "debtor": "P00",
+      "creditor": "P07",
+      "asset": "EURC",
+      "amount": "33012700"
+    },
+    {
+      "id": "ob-085",
+      "debtor": "P03",
+      "creditor": "P05",
+      "asset": "EURC",
+      "amount": "62132700"
+    },
+    {
+      "id": "ob-086",
+      "debtor": "P10",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "8067500"
+    },
+    {
+      "id": "ob-087",
+      "debtor": "P02",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "23683900"
+    },
+    {
+      "id": "ob-088",
+      "debtor": "P09",
+      "creditor": "P04",
+      "asset": "EURC",
+      "amount": "31247600"
+    },
+    {
+      "id": "ob-089",
+      "debtor": "P09",
+      "creditor": "P04",
+      "asset": "EURC",
+      "amount": "63648400"
+    },
+    {
+      "id": "ob-090",
+      "debtor": "P08",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "53122200"
+    },
+    {
+      "id": "ob-091",
+      "debtor": "P10",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "21349000"
+    },
+    {
+      "id": "ob-092",
+      "debtor": "P10",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "33743700"
+    },
+    {
+      "id": "ob-093",
+      "debtor": "P05",
+      "creditor": "P07",
+      "asset": "EURC",
+      "amount": "42977300"
+    },
+    {
+      "id": "ob-094",
+      "debtor": "P00",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "25781100"
+    },
+    {
+      "id": "ob-095",
+      "debtor": "P08",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "30027700"
+    },
+    {
+      "id": "ob-096",
+      "debtor": "P04",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "24908100"
+    },
+    {
+      "id": "ob-097",
+      "debtor": "P09",
+      "creditor": "P04",
+      "asset": "EURC",
+      "amount": "96637400"
+    },
+    {
+      "id": "ob-098",
+      "debtor": "P06",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "1550400"
+    },
+    {
+      "id": "ob-099",
+      "debtor": "P01",
+      "creditor": "P03",
+      "asset": "USDC",
+      "amount": "3412900"
+    },
+    {
+      "id": "ob-100",
+      "debtor": "P11",
+      "creditor": "P04",
+      "asset": "EURC",
+      "amount": "75628800"
+    },
+    {
+      "id": "ob-101",
+      "debtor": "P10",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "750800"
+    },
+    {
+      "id": "ob-102",
+      "debtor": "P11",
+      "creditor": "P05",
+      "asset": "USDC",
+      "amount": "17201000"
+    },
+    {
+      "id": "ob-103",
+      "debtor": "P10",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "32574300"
+    },
+    {
+      "id": "ob-104",
+      "debtor": "P06",
+      "creditor": "P03",
+      "asset": "USDC",
+      "amount": "21391800"
+    },
+    {
+      "id": "ob-105",
+      "debtor": "P01",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "81421900"
+    },
+    {
+      "id": "ob-106",
+      "debtor": "P00",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "1532500"
+    },
+    {
+      "id": "ob-107",
+      "debtor": "P09",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "17004600"
+    },
+    {
+      "id": "ob-108",
+      "debtor": "P09",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "59942800"
+    },
+    {
+      "id": "ob-109",
+      "debtor": "P09",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "81756500"
+    },
+    {
+      "id": "ob-110",
+      "debtor": "P05",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "43166600"
+    },
+    {
+      "id": "ob-111",
+      "debtor": "P03",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "11621900"
+    },
+    {
+      "id": "ob-112",
+      "debtor": "P07",
+      "creditor": "P05",
+      "asset": "EURC",
+      "amount": "92484400"
+    },
+    {
+      "id": "ob-113",
+      "debtor": "P00",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "70578300"
+    },
+    {
+      "id": "ob-114",
+      "debtor": "P08",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "2644400"
+    },
+    {
+      "id": "ob-115",
+      "debtor": "P10",
+      "creditor": "P11",
+      "asset": "EURC",
+      "amount": "14546400"
+    },
+    {
+      "id": "ob-116",
+      "debtor": "P02",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "90267700"
+    },
+    {
+      "id": "ob-117",
+      "debtor": "P02",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "29100"
+    },
+    {
+      "id": "ob-118",
+      "debtor": "P01",
+      "creditor": "P03",
+      "asset": "USDC",
+      "amount": "10960400"
+    },
+    {
+      "id": "ob-119",
+      "debtor": "P09",
+      "creditor": "P08",
+      "asset": "USDC",
+      "amount": "23878300"
+    },
+    {
+      "id": "ob-120",
+      "debtor": "P06",
+      "creditor": "P05",
+      "asset": "EURC",
+      "amount": "52816000"
+    },
+    {
+      "id": "ob-121",
+      "debtor": "P02",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "50351000"
+    },
+    {
+      "id": "ob-122",
+      "debtor": "P04",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "35812200"
+    },
+    {
+      "id": "ob-123",
+      "debtor": "P10",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "32663900"
+    },
+    {
+      "id": "ob-124",
+      "debtor": "P06",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "83919500"
+    },
+    {
+      "id": "ob-125",
+      "debtor": "P04",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "21165900"
+    },
+    {
+      "id": "ob-126",
+      "debtor": "P10",
+      "creditor": "P04",
+      "asset": "EURC",
+      "amount": "53468400"
+    },
+    {
+      "id": "ob-127",
+      "debtor": "P01",
+      "creditor": "P04",
+      "asset": "EURC",
+      "amount": "63626900"
+    },
+    {
+      "id": "ob-128",
+      "debtor": "P05",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "37073900"
+    },
+    {
+      "id": "ob-129",
+      "debtor": "P02",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "16202000"
+    },
+    {
+      "id": "ob-130",
+      "debtor": "P00",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "39909600"
+    },
+    {
+      "id": "ob-131",
+      "debtor": "P10",
+      "creditor": "P06",
+      "asset": "EURC",
+      "amount": "73640900"
+    },
+    {
+      "id": "ob-132",
+      "debtor": "P08",
+      "creditor": "P10",
+      "asset": "EURC",
+      "amount": "62645400"
+    },
+    {
+      "id": "ob-133",
+      "debtor": "P11",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "41525500"
+    },
+    {
+      "id": "ob-134",
+      "debtor": "P11",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "56681500"
+    },
+    {
+      "id": "ob-135",
+      "debtor": "P04",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "85192100"
+    },
+    {
+      "id": "ob-136",
+      "debtor": "P07",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "89375000"
+    },
+    {
+      "id": "ob-137",
+      "debtor": "P07",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "37340900"
+    },
+    {
+      "id": "ob-138",
+      "debtor": "P11",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "25546400"
+    },
+    {
+      "id": "ob-139",
+      "debtor": "P09",
+      "creditor": "P03",
+      "asset": "EURC",
+      "amount": "94079500"
+    },
+    {
+      "id": "ob-140",
+      "debtor": "P06",
+      "creditor": "P08",
+      "asset": "USDC",
+      "amount": "71321500"
+    },
+    {
+      "id": "ob-141",
+      "debtor": "P10",
+      "creditor": "P03",
+      "asset": "USDC",
+      "amount": "28302100"
+    },
+    {
+      "id": "ob-142",
+      "debtor": "P08",
+      "creditor": "P07",
+      "asset": "EURC",
+      "amount": "21883300"
+    },
+    {
+      "id": "ob-143",
+      "debtor": "P05",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "81986700"
+    },
+    {
+      "id": "ob-144",
+      "debtor": "P02",
+      "creditor": "P09",
+      "asset": "EURC",
+      "amount": "5521400"
+    },
+    {
+      "id": "ob-145",
+      "debtor": "P10",
+      "creditor": "P04",
+      "asset": "EURC",
+      "amount": "97823200"
+    },
+    {
+      "id": "ob-146",
+      "debtor": "P04",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "62416000"
+    },
+    {
+      "id": "ob-147",
+      "debtor": "P00",
+      "creditor": "P08",
+      "asset": "USDC",
+      "amount": "36830900"
+    },
+    {
+      "id": "ob-148",
+      "debtor": "P10",
+      "creditor": "P00",
+      "asset": "EURC",
+      "amount": "27286200"
+    },
+    {
+      "id": "ob-149",
+      "debtor": "P03",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "23997800"
+    },
+    {
+      "id": "ob-150",
+      "debtor": "P11",
+      "creditor": "P06",
+      "asset": "EURC",
+      "amount": "52229200"
+    },
+    {
+      "id": "ob-151",
+      "debtor": "P11",
+      "creditor": "P08",
+      "asset": "EURC",
+      "amount": "20888000"
+    },
+    {
+      "id": "ob-152",
+      "debtor": "P02",
+      "creditor": "P03",
+      "asset": "EURC",
+      "amount": "41790600"
+    },
+    {
+      "id": "ob-153",
+      "debtor": "P02",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "98776000"
+    },
+    {
+      "id": "ob-154",
+      "debtor": "P08",
+      "creditor": "P00",
+      "asset": "EURC",
+      "amount": "17873700"
+    },
+    {
+      "id": "ob-155",
+      "debtor": "P03",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "14997000"
+    },
+    {
+      "id": "ob-156",
+      "debtor": "P02",
+      "creditor": "P03",
+      "asset": "EURC",
+      "amount": "5400000"
+    },
+    {
+      "id": "ob-157",
+      "debtor": "P09",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "14484100"
+    },
+    {
+      "id": "ob-158",
+      "debtor": "P05",
+      "creditor": "P08",
+      "asset": "USDC",
+      "amount": "31984600"
+    },
+    {
+      "id": "ob-159",
+      "debtor": "P04",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "63576500"
+    },
+    {
+      "id": "ob-160",
+      "debtor": "P07",
+      "creditor": "P08",
+      "asset": "USDC",
+      "amount": "66516000"
+    },
+    {
+      "id": "ob-161",
+      "debtor": "P10",
+      "creditor": "P07",
+      "asset": "EURC",
+      "amount": "2574900"
+    },
+    {
+      "id": "ob-162",
+      "debtor": "P09",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "750900"
+    },
+    {
+      "id": "ob-163",
+      "debtor": "P02",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "28334800"
+    },
+    {
+      "id": "ob-164",
+      "debtor": "P04",
+      "creditor": "P08",
+      "asset": "USDC",
+      "amount": "25228500"
+    },
+    {
+      "id": "ob-165",
+      "debtor": "P05",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "50357300"
+    },
+    {
+      "id": "ob-166",
+      "debtor": "P01",
+      "creditor": "P10",
+      "asset": "EURC",
+      "amount": "18582400"
+    },
+    {
+      "id": "ob-167",
+      "debtor": "P07",
+      "creditor": "P00",
+      "asset": "EURC",
+      "amount": "77404200"
+    },
+    {
+      "id": "ob-168",
+      "debtor": "P00",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "75072100"
+    },
+    {
+      "id": "ob-169",
+      "debtor": "P05",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "58385100"
+    },
+    {
+      "id": "ob-170",
+      "debtor": "P02",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "56830200"
+    },
+    {
+      "id": "ob-171",
+      "debtor": "P06",
+      "creditor": "P04",
+      "asset": "USDC",
+      "amount": "16940800"
+    },
+    {
+      "id": "ob-172",
+      "debtor": "P10",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "34155800"
+    },
+    {
+      "id": "ob-173",
+      "debtor": "P07",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "34494600"
+    },
+    {
+      "id": "ob-174",
+      "debtor": "P03",
+      "creditor": "P09",
+      "asset": "EURC",
+      "amount": "80990100"
+    },
+    {
+      "id": "ob-175",
+      "debtor": "P05",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "32868500"
+    },
+    {
+      "id": "ob-176",
+      "debtor": "P10",
+      "creditor": "P05",
+      "asset": "USDC",
+      "amount": "73858500"
+    },
+    {
+      "id": "ob-177",
+      "debtor": "P10",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "90011600"
+    },
+    {
+      "id": "ob-178",
+      "debtor": "P04",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "92179600"
+    },
+    {
+      "id": "ob-179",
+      "debtor": "P10",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "83012400"
+    },
+    {
+      "id": "ob-180",
+      "debtor": "P00",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "80962200"
+    },
+    {
+      "id": "ob-181",
+      "debtor": "P06",
+      "creditor": "P01",
+      "asset": "EURC",
+      "amount": "99716700"
+    },
+    {
+      "id": "ob-182",
+      "debtor": "P01",
+      "creditor": "P08",
+      "asset": "EURC",
+      "amount": "64094100"
+    },
+    {
+      "id": "ob-183",
+      "debtor": "P11",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "87881600"
+    },
+    {
+      "id": "ob-184",
+      "debtor": "P10",
+      "creditor": "P07",
+      "asset": "USDC",
+      "amount": "48123000"
+    },
+    {
+      "id": "ob-185",
+      "debtor": "P00",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "98157100"
+    },
+    {
+      "id": "ob-186",
+      "debtor": "P03",
+      "creditor": "P09",
+      "asset": "USDC",
+      "amount": "89868400"
+    },
+    {
+      "id": "ob-187",
+      "debtor": "P06",
+      "creditor": "P05",
+      "asset": "USDC",
+      "amount": "72174000"
+    },
+    {
+      "id": "ob-188",
+      "debtor": "P02",
+      "creditor": "P03",
+      "asset": "USDC",
+      "amount": "39839500"
+    },
+    {
+      "id": "ob-189",
+      "debtor": "P01",
+      "creditor": "P10",
+      "asset": "USDC",
+      "amount": "46039700"
+    },
+    {
+      "id": "ob-190",
+      "debtor": "P07",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "52686200"
+    },
+    {
+      "id": "ob-191",
+      "debtor": "P03",
+      "creditor": "P00",
+      "asset": "USDC",
+      "amount": "56290700"
+    },
+    {
+      "id": "ob-192",
+      "debtor": "P06",
+      "creditor": "P02",
+      "asset": "USDC",
+      "amount": "99847000"
+    },
+    {
+      "id": "ob-193",
+      "debtor": "P01",
+      "creditor": "P11",
+      "asset": "USDC",
+      "amount": "35606900"
+    },
+    {
+      "id": "ob-194",
+      "debtor": "P07",
+      "creditor": "P09",
+      "asset": "EURC",
+      "amount": "73020500"
+    },
+    {
+      "id": "ob-195",
+      "debtor": "P09",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "27986900"
+    },
+    {
+      "id": "ob-196",
+      "debtor": "P06",
+      "creditor": "P01",
+      "asset": "USDC",
+      "amount": "26790800"
+    },
+    {
+      "id": "ob-197",
+      "debtor": "P09",
+      "creditor": "P03",
+      "asset": "EURC",
+      "amount": "59303900"
+    },
+    {
+      "id": "ob-198",
+      "debtor": "P09",
+      "creditor": "P03",
+      "asset": "USDC",
+      "amount": "31444300"
+    },
+    {
+      "id": "ob-199",
+      "debtor": "P08",
+      "creditor": "P06",
+      "asset": "USDC",
+      "amount": "65350900"
+    }
+  ],
+  "netting": {
+    "positions": [
+      {
+        "asset": "EURC",
+        "participant": "P00",
+        "net": "308217200"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P01",
+        "net": "19449500"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P02",
+        "net": "-52302700"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P03",
+        "net": "18864200"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P04",
+        "net": "512533300"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P05",
+        "net": "171558500"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P06",
+        "net": "-151075500"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P07",
+        "net": "-53148900"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P08",
+        "net": "-126135700"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P09",
+        "net": "-319191100"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P10",
+        "net": "-281889000"
+      },
+      {
+        "asset": "EURC",
+        "participant": "P11",
+        "net": "-46879800"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P00",
+        "net": "89594000"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P01",
+        "net": "227650000"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P02",
+        "net": "-90309900"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P03",
+        "net": "-215723500"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P04",
+        "net": "-266502800"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P05",
+        "net": "-297312800"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P06",
+        "net": "479596800"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P07",
+        "net": "151605800"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P08",
+        "net": "-117597100"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P09",
+        "net": "170707800"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P10",
+        "net": "-430842900"
+      },
+      {
+        "asset": "USDC",
+        "participant": "P11",
+        "net": "299134600"
+      }
+    ],
+    "transfers": [
+      {
+        "asset": "EURC",
+        "from": "P02",
+        "to": "P00",
+        "amount": "52302700"
+      },
+      {
+        "asset": "EURC",
+        "from": "P06",
+        "to": "P00",
+        "amount": "151075500"
+      },
+      {
+        "asset": "EURC",
+        "from": "P07",
+        "to": "P00",
+        "amount": "53148900"
+      },
+      {
+        "asset": "EURC",
+        "from": "P08",
+        "to": "P00",
+        "amount": "51690100"
+      },
+      {
+        "asset": "EURC",
+        "from": "P08",
+        "to": "P01",
+        "amount": "19449500"
+      },
+      {
+        "asset": "EURC",
+        "from": "P08",
+        "to": "P03",
+        "amount": "18864200"
+      },
+      {
+        "asset": "EURC",
+        "from": "P08",
+        "to": "P04",
+        "amount": "36131900"
+      },
+      {
+        "asset": "EURC",
+        "from": "P09",
+        "to": "P04",
+        "amount": "319191100"
+      },
+      {
+        "asset": "EURC",
+        "from": "P10",
+        "to": "P04",
+        "amount": "157210300"
+      },
+      {
+        "asset": "EURC",
+        "from": "P10",
+        "to": "P05",
+        "amount": "124678700"
+      },
+      {
+        "asset": "EURC",
+        "from": "P11",
+        "to": "P05",
+        "amount": "46879800"
+      },
+      {
+        "asset": "USDC",
+        "from": "P02",
+        "to": "P00",
+        "amount": "89594000"
+      },
+      {
+        "asset": "USDC",
+        "from": "P02",
+        "to": "P01",
+        "amount": "715900"
+      },
+      {
+        "asset": "USDC",
+        "from": "P03",
+        "to": "P01",
+        "amount": "215723500"
+      },
+      {
+        "asset": "USDC",
+        "from": "P04",
+        "to": "P01",
+        "amount": "11210600"
+      },
+      {
+        "asset": "USDC",
+        "from": "P04",
+        "to": "P06",
+        "amount": "255292200"
+      },
+      {
+        "asset": "USDC",
+        "from": "P05",
+        "to": "P06",
+        "amount": "224304600"
+      },
+      {
+        "asset": "USDC",
+        "from": "P05",
+        "to": "P07",
+        "amount": "73008200"
+      },
+      {
+        "asset": "USDC",
+        "from": "P08",
+        "to": "P07",
+        "amount": "78597600"
+      },
+      {
+        "asset": "USDC",
+        "from": "P08",
+        "to": "P09",
+        "amount": "38999500"
+      },
+      {
+        "asset": "USDC",
+        "from": "P10",
+        "to": "P09",
+        "amount": "131708300"
+      },
+      {
+        "asset": "USDC",
+        "from": "P10",
+        "to": "P11",
+        "amount": "299134600"
+      }
+    ],
+    "assets": [
+      {
+        "asset": "EURC",
+        "obligations": 55,
+        "gross": "2794038200",
+        "settled": "1030622700",
+        "transfers": 11
+      },
+      {
+        "asset": "USDC",
+        "obligations": 145,
+        "gross": "7154829500",
+        "settled": "1418289000",
+        "transfers": 11
+      }
+    ]
+  }
+}
