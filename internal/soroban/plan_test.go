@@ -99,3 +99,22 @@ func TestAWindowThatNetsToZeroNeedsNothingOnChain(t *testing.T) {
 		t.Fatalf("want ErrNothingToSettle, got %v", err)
 	}
 }
+
+func TestPlanRespectsThePositionQuota(t *testing.T) {
+	// One hub pays 20 members: 21 new positions on the hub's account.
+	var obs []netting.Obligation
+	addresses := map[string]string{"hub": addr(0)}
+	for i := 1; i <= 20; i++ {
+		id := fmt.Sprintf("m%d", i)
+		addresses[id] = addr(i)
+		obs = append(obs, netting.Obligation{ID: id, Debtor: "hub", Creditor: id, Asset: "USDC", Amount: netting.NewAmount(1)})
+	}
+	m := Mapping{Addresses: addresses, Tokens: map[string]string{"USDC": usdc}}
+	if _, err := Plan(closed(t, obs), m); err == nil || !strings.Contains(err.Error(), "position_quota of 16") {
+		t.Fatalf("want a quota error, got %v", err)
+	}
+	m.PositionQuota = 32
+	if _, err := Plan(closed(t, obs), m); err != nil {
+		t.Fatal(err)
+	}
+}

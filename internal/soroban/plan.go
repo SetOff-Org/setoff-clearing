@@ -21,6 +21,9 @@ import (
 const (
 	MaxBatch     = 32 // obligations per submit call
 	MaxPositions = 64 // (member, token) positions per contract window
+	// DefaultPositionQuota is the contract's default for how many new
+	// positions one debtor's obligations may open per window.
+	DefaultPositionQuota = 16
 )
 
 // Obligation is the contract's Obligation struct, in the JSON form the
@@ -37,6 +40,8 @@ type Obligation struct {
 type Mapping struct {
 	Addresses map[string]string // participant id -> G… or C… address
 	Tokens    map[string]string // asset -> SEP-41 token contract C…
+	// PositionQuota is the contract's position_quota; 0 means the default.
+	PositionQuota int
 }
 
 // Plan returns the submit batches that settle window w on chain. Each leg's
@@ -48,6 +53,7 @@ func Plan(w *clearing.Closed, m Mapping) ([][]Obligation, error) {
 	}
 	var legs []Obligation
 	positions := map[[2]string]bool{}
+	opened := map[string]int{} // new positions per debtor, as the contract counts them
 	for i, t := range w.Netting.Transfers {
 		debtor, creditor, token := m.Addresses[t.From], m.Addresses[t.To], m.Tokens[t.Asset]
 		switch {
@@ -58,8 +64,12 @@ func Plan(w *clearing.Closed, m Mapping) ([][]Obligation, error) {
 		case !address(token, "C"):
 			return nil, fmt.Errorf("asset %s has no token contract", t.Asset)
 		}
-		positions[[2]string{debtor, token}] = true
-		positions[[2]string{creditor, token}] = true
+		for _, p := range [][2]string{{debtor, token}, {creditor, token}} {
+			if !positions[p] {
+				positions[p] = true
+				opened[debtor]++
+			}
+		}
 		legs = append(legs, Obligation{
 			Debtor: debtor, Creditor: creditor, Token: token, Amount: t.Amount.String(),
 			Reference: Reference(w.Window, i),
@@ -67,6 +77,15 @@ func Plan(w *clearing.Closed, m Mapping) ([][]Obligation, error) {
 	}
 	if len(positions) > MaxPositions {
 		return nil, fmt.Errorf("window %d touches %d positions; the contract settles at most %d per window", w.Window, len(positions), MaxPositions)
+	}
+	quota := m.PositionQuota
+	if quota == 0 {
+		quota = DefaultPositionQuota
+	}
+	for debtor, n := range opened {
+		if n > quota {
+			return nil, fmt.Errorf("window %d: %s would open %d positions, over the contract's position_quota of %d; raise it with set_position_quota", w.Window, debtor, n, quota)
+		}
 	}
 	var batches [][]Obligation
 	for len(legs) > 0 {

@@ -19,6 +19,7 @@ func runSoroban(args []string, out io.Writer) error {
 	network := fs.String("network", "testnet", "Stellar CLI network name")
 	source := fs.String("source", "operator", "Stellar CLI identity that submits")
 	asJSON := fs.Bool("json", false, "print the batches as JSON")
+	quota := fs.Int("position-quota", soroban.DefaultPositionQuota, "the contract's position_quota")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -36,7 +37,7 @@ func runSoroban(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	batches, err := soroban.Plan(w, soroban.Mapping{Addresses: cfg.Addresses(), Tokens: cfg.Tokens})
+	batches, err := soroban.Plan(w, soroban.Mapping{Addresses: cfg.Addresses(), Tokens: cfg.Tokens, PositionQuota: *quota})
 	if errors.Is(err, soroban.ErrNothingToSettle) {
 		_, err = fmt.Fprintf(out, "# window %d nets to zero: nothing to settle on chain\n", *window)
 		return err
