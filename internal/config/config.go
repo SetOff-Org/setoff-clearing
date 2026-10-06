@@ -32,6 +32,14 @@ type Config struct {
 	// CloseEvery closes the open window on a schedule, e.g. "1h". Empty
 	// windows are skipped. Unset: only the operator closes windows.
 	CloseEvery Duration `toml:"close_every"`
+	// SEP10, if set, lets participants sign in with their Stellar accounts
+	// (the address on each [[participant]]) instead of API keys.
+	SEP10 struct {
+		HomeDomain     string `toml:"home_domain"`
+		Network        string `toml:"network"`
+		SigningKeyEnv  string `toml:"signing_key_env"`
+		TokenSecretEnv string `toml:"token_secret_env"`
+	} `toml:"sep10"`
 	// Webhook, if set, is told about every closed window.
 	Webhook struct {
 		URL       string `toml:"url"`

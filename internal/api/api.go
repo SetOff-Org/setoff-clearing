@@ -13,6 +13,7 @@ import (
 
 	"github.com/SetOff-Org/setoff-clearing/internal/clearing"
 	"github.com/SetOff-Org/setoff-clearing/internal/report"
+	"github.com/SetOff-Org/setoff-clearing/internal/sep10"
 )
 
 // Server serves one clearing store.
@@ -25,6 +26,10 @@ type Server struct {
 	Decimals     map[string]int         // per asset, for reports
 	OnClose      func(*clearing.Closed) // called after each close, if set
 	Metrics      Metrics
+	// SEP10, if set, lets participants sign in with their Stellar accounts;
+	// Addresses maps each account to its participant id.
+	SEP10     *sep10.Server
+	Addresses map[string]string
 }
 
 // Handler returns the routes.
@@ -36,6 +41,9 @@ type Server struct {
 //	GET  /v1/windows           participant or operator: archived windows, newest first (?before=n&limit=50)
 //	GET  /v1/windows/{n}       participant or operator: an archived window
 //	GET  /v1/windows/{n}/camt053  ISO 20022 statements: the caller's own, or all for the operator
+//	GET  /auth                 SEP-10 challenge for ?account=G… (with sep10 configured)
+//	POST /auth                 {"transaction": signed challenge} -> {"token"}
+//	GET  /.well-known/stellar.toml
 //	GET  /healthz
 //	GET  /metrics
 //
@@ -51,6 +59,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/windows/{n}", s.anyone(s.archived))
 	mux.HandleFunc("GET /v1/windows/{n}/camt053", s.anyone(s.camt053))
 	mux.Handle("GET /metrics", &s.Metrics)
+	if s.SEP10 != nil {
+		mux.HandleFunc("GET /auth", s.challenge)
+		mux.HandleFunc("POST /auth", s.token)
+		mux.HandleFunc("GET /.well-known/stellar.toml", func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Access-Control-Allow-Origin", "*") // required by SEP-1
+			_, _ = w.Write([]byte(s.SEP10.StellarTOML()))
+		})
+	}
 	return s.observe(mux)
 }
 
@@ -77,7 +94,8 @@ func bearer(r *http.Request) string {
 	return t
 }
 
-// participant returns the caller's participant id, comparing keys in constant time.
+// participant returns the caller's participant id: by API key, compared in
+// constant time, or by a SEP-10 token for a participant's account.
 func (s *Server) participant(r *http.Request) (string, bool) {
 	given := []byte(bearer(r))
 	for key, id := range s.Participants {
@@ -85,7 +103,44 @@ func (s *Server) participant(r *http.Request) (string, bool) {
 			return id, true
 		}
 	}
+	if s.SEP10 != nil {
+		if account, err := s.SEP10.Account(string(given)); err == nil {
+			id, ok := s.Addresses[account]
+			return id, ok
+		}
+	}
 	return "", false
+}
+
+// challenge is SEP-10's GET /auth.
+func (s *Server) challenge(w http.ResponseWriter, r *http.Request) {
+	tx, err := s.SEP10.Challenge(r.URL.Query().Get("account"))
+	if err != nil {
+		reply(w, http.StatusBadRequest, errBody(err.Error()))
+		return
+	}
+	reply(w, http.StatusOK, map[string]string{"transaction": tx, "network_passphrase": s.SEP10.Passphrase})
+}
+
+// token is SEP-10's POST /auth. Only participants' accounts get a token.
+func (s *Server) token(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Transaction string `json:"transaction"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&req); err != nil || req.Transaction == "" {
+		reply(w, http.StatusBadRequest, errBody(`body must be {"transaction": "<signed challenge>"}`))
+		return
+	}
+	token, account, err := s.SEP10.Verify(req.Transaction)
+	if err != nil {
+		reply(w, http.StatusBadRequest, errBody(err.Error()))
+		return
+	}
+	if _, ok := s.Addresses[account]; !ok {
+		reply(w, http.StatusForbidden, errBody(account+" is not a participant"))
+		return
+	}
+	reply(w, http.StatusOK, map[string]string{"token": token})
 }
 
 func (s *Server) operator(r *http.Request) bool {

@@ -31,6 +31,60 @@ paths:
           description: Prometheus text exposition format.
           content:
             text/plain: {}
+  /auth:
+    get:
+      summary: SEP-10 challenge for a participant's Stellar account
+      description: Present when the service is configured with [sep10].
+      security: []
+      parameters:
+        - { name: account, in: query, required: true, schema: { type: string }, description: The participant's G… account. }
+      responses:
+        "200":
+          description: A challenge transaction to sign with the account's key.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction: { type: string, description: base64 XDR }
+                  network_passphrase: { type: string }
+        "400": { $ref: "#/components/responses/Error" }
+    post:
+      summary: Exchange a signed challenge for a bearer token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transaction]
+              properties:
+                transaction: { type: string, description: The challenge, signed by the account. }
+      responses:
+        "200":
+          description: A bearer token valid for one hour.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+        "400": { $ref: "#/components/responses/Error" }
+        "403":
+          description: The account belongs to no participant.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /.well-known/stellar.toml:
+    get:
+      summary: SEP-1 file naming the web auth endpoint and signing key
+      security: []
+      responses:
+        "200":
+          description: TOML with WEB_AUTH_ENDPOINT, SIGNING_KEY and NETWORK_PASSPHRASE.
+          content:
+            text/plain: {}
   /v1/obligations:
     post:
       summary: Record an obligation the caller owes
@@ -180,7 +234,7 @@ components:
     participant:
       type: http
       scheme: bearer
-      description: A participant's key, from its key_env.
+      description: A participant's key, from its key_env, or a SEP-10 token from POST /auth.
     operator:
       type: http
       scheme: bearer

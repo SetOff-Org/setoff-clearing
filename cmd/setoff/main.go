@@ -23,6 +23,7 @@ import (
 	"github.com/SetOff-Org/setoff-clearing/internal/clearing"
 	"github.com/SetOff-Org/setoff-clearing/internal/config"
 	"github.com/SetOff-Org/setoff-clearing/internal/netting"
+	"github.com/SetOff-Org/setoff-clearing/internal/sep10"
 	"github.com/SetOff-Org/setoff-clearing/internal/webhook"
 )
 
@@ -183,6 +184,18 @@ func runServe(args []string) error {
 		defer cancel()
 		_ = srv.Shutdown(shutdown)
 	}()
+	if cfg.SEP10.HomeDomain != "" {
+		auth, err := sep10.New(os.Getenv(cfg.SEP10.SigningKeyEnv), cfg.SEP10.HomeDomain,
+			sep10.Passphrase(cfg.SEP10.Network), []byte(os.Getenv(cfg.SEP10.TokenSecretEnv)))
+		if err != nil {
+			return fmt.Errorf("sep10: %w", err)
+		}
+		s.SEP10, s.Addresses = auth, map[string]string{}
+		for id, address := range cfg.Addresses() {
+			s.Addresses[address] = id
+		}
+		logger.Info("sep10 enabled", "home_domain", cfg.SEP10.HomeDomain, "signing_key", auth.SigningKey())
+	}
 	notify, err := notifier(cfg, logger)
 	if err != nil {
 		return err

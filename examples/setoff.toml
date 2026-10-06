@@ -50,3 +50,11 @@ EURC = 7
 [webhook]
 url = "https://treasury.example.org/setoff"
 secret_env = "SETOFF_WEBHOOK_SECRET"
+
+# Participants sign in with their Stellar accounts (SEP-10) instead of, or as
+# well as, API keys (optional). Serve this behind TLS at home_domain.
+[sep10]
+home_domain = "clearing.example.org"
+network = "testnet"
+signing_key_env = "SETOFF_SEP10_SIGNING_SEED"
+token_secret_env = "SETOFF_SEP10_TOKEN_SECRET"
