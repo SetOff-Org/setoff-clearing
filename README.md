@@ -32,8 +32,11 @@ transfers. This repository holds:
 - **`setoff net`**: nets a CSV or JSON file of obligations and prints positions,
   the plan and the liquidity saved (`--json` for the full result).
 - **`setoff serve`**: a clearing service. Participants post obligations into the
-  open window, anyone in the group can preview the netting, and the operator
-  closes the window, which nets it, archives it, and opens the next one.
+  open window and see their side of it; the operator, or a schedule, closes the
+  window, which nets it, archives it, and opens the next one.
+- **`setoff report`**: ISO 20022 camt.053 statements for a closed window.
+- **`setoff soroban`**: the calls that settle a closed window through the
+  [settlement contract](https://github.com/SetOff-Org/setoff-contracts).
 
 The netting algorithm is an independent Go implementation of
 [setoff-engine](https://github.com/SetOff-Org/setoff-engine). The tests require
@@ -42,39 +45,75 @@ it to reproduce every Rust reference vector exactly, including a
 
 ## Clearing service
 
-```toml
-# setoff.toml
-listen = "127.0.0.1:7500"
-data_dir = "data"
-operator_key_env = "SETOFF_OPERATOR_KEY"
-
-[[participant]]
-id = "anchor-ng"
-key_env = "SETOFF_KEY_ANCHOR_NG"
-
-[[participant]]
-id = "anchor-us"
-key_env = "SETOFF_KEY_ANCHOR_US"
+```sh
+cp examples/setoff.toml .   # participants, keys, assets, schedule
+setoff serve
 ```
+
+[`examples/setoff.toml`](examples/setoff.toml) documents every setting. Each
+participant has its own key; the service refuses to start if two parties share
+a key, so nobody can act as anyone else.
 
 | Route | Who | What |
 |---|---|---|
 | `POST /v1/obligations` | participant | `{"reference", "creditor", "asset", "amount"}`. The debtor is always the caller: you can only commit yourself to pay |
+| `GET /v1/me` | participant | Your obligations, net positions and plan legs in the open window |
 | `GET /v1/window` | any | Open window: obligation count and live netting |
 | `POST /v1/window/close` | operator | Net, archive and open the next window |
+| `GET /v1/windows` | any | Archived windows, newest first |
 | `GET /v1/windows/{n}` | any | An archived window |
+| `GET /v1/windows/{n}/camt053` | any | camt.053 statements: your own, or all of them for the operator |
+| `GET /metrics` | open | Prometheus counters by route |
 
-Every obligation is journaled with `fsync` before it is acknowledged, so a
-restart loses nothing, and duplicate references are rejected even across
-restarts.
+The full schema is in [`api/openapi.yaml`](api/openapi.yaml).
+
+**Durability.** Every obligation is journaled with `fsync` before it is
+acknowledged. A crash mid-write drops only the unacknowledged line, and a
+crash while closing can never replay an archived window into the next one.
+References are unique per debtor and window, across restarts: an identical
+retry gets the original id back (`"replayed": true`), anything else under a
+used reference is a 409.
+
+**Scheduling and notifications.** `close_every = "1h"` closes non-empty windows
+on a schedule. With `[webhook]` set, every close is POSTed as JSON, signed with
+`X-SetOff-Signature: sha256=HMAC(secret, "<X-SetOff-Timestamp>.<body>")` and
+retried with backoff.
+
+## Settling on chain
+
+The settlement contract nets on chain too, but it does not need every gross
+obligation. `setoff soroban` submits the window's netted plan: the same net
+positions in at most one leg fewer than participants per asset.
+
+```console
+$ setoff soroban --window 7 --network testnet
+# window 7: 1 submit call(s), then settle
+stellar contract invoke --id CCV7S3…WNGU --source operator --network testnet -- submit --obligations '[{"debtor":"GAIH3U…","creditor":"GBRPYH…","token":"CBIELT…","amount":"1450000000","reference":"5f2c…"}]'
+stellar contract invoke --id CCV7S3…WNGU --source operator --network testnet -- settle
+```
+
+Each leg's reference is derived from the window and leg number, so a batch
+resubmitted after a timeout is rejected by the contract rather than booked
+twice. Every submit must be authorized by its debtors; a debtor that is a
+[Tessera](https://github.com/Use-Tessera) threshold account signs through its
+coordinator's `/v1/authorize`.
+
+## Treasury reports
+
+```sh
+setoff report --window 7 --participant anchor-ng > window-7.camt053.xml
+```
+
+One statement per participant and asset: each obligation is a booked entry and
+the net position is the closing balance. `[decimals]` turns smallest units into
+whole units; assets without an ISO 4217 code are reported under `XXX` and named
+in the statement.
 
 ## Roadmap
 
-1. Submit closed windows to
-   [setoff-contracts](https://github.com/SetOff-Org/setoff-contracts), with
-   participant-signed Soroban authorization entries.
-2. SEP-10 authentication for participants instead of API keys.
-3. Settlement reports (ISO 20022 `camt.053`) for treasury systems.
+1. SEP-10 authentication for participants instead of API keys.
+2. Submitting settlement batches directly, collecting debtors' authorization
+   entries over the API.
 
 ## License
 

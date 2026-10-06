@@ -60,10 +60,20 @@ paths:
                 properties:
                   id: { type: string, description: "<debtor>:<reference>" }
                   window: { type: integer }
+        "200":
+          description: "An identical obligation was already recorded under this reference: its id is returned, with replayed set to true."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  window: { type: integer }
+                  replayed: { type: boolean, const: true }
         "400": { $ref: "#/components/responses/Error" }
         "401": { $ref: "#/components/responses/Error" }
         "409":
-          description: The reference was already used in this window.
+          description: The reference was already used in this window for a different obligation.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
