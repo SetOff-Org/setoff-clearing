@@ -4,6 +4,10 @@ listen = "127.0.0.1:7500"
 # Journals and archived windows. Relative to this file.
 data_dir = "data"
 
+# Close the open window on a schedule (empty windows are skipped). Leave out
+# to close only when the operator asks.
+close_every = "1h"
+
 # Bearer key the operator uses to close windows.
 operator_key_env = "SETOFF_OPERATOR_KEY"
 

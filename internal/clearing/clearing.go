@@ -6,6 +6,7 @@ package clearing
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -347,4 +348,24 @@ func (c *Clearing) Windows(before uint64, limit int) ([]Summary, error) {
 		out = append(out, Summary{Window: w.Window, ClosedAt: w.ClosedAt, Obligations: len(w.Obligations), Transfers: len(w.Netting.Transfers)})
 	}
 	return out, nil
+}
+
+// AutoClose closes the open window every interval until ctx ends, skipping
+// windows with no obligations. done is told about each attempt.
+func (c *Clearing) AutoClose(ctx context.Context, every time.Duration, done func(*Closed, error)) {
+	t := time.NewTicker(every)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case now := <-t.C:
+			c.mu.Lock()
+			empty := len(c.obligations) == 0
+			c.mu.Unlock()
+			if !empty {
+				done(c.Close(now))
+			}
+		}
+	}
 }

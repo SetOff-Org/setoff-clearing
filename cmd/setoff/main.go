@@ -182,7 +182,16 @@ func runServe(args []string) error {
 		defer cancel()
 		_ = srv.Shutdown(shutdown)
 	}()
-	logger.Info("serving", "addr", cfg.Listen, "participants", len(ids))
+	if every := cfg.CloseEvery.Duration; every > 0 {
+		go store.AutoClose(ctx, every, func(w *clearing.Closed, err error) {
+			if err != nil {
+				logger.Error("scheduled close", "err", err)
+				return
+			}
+			logger.Info("closed window", "window", w.Window, "obligations", len(w.Obligations), "transfers", len(w.Netting.Transfers))
+		})
+	}
+	logger.Info("serving", "addr", cfg.Listen, "participants", len(ids), "close_every", cfg.CloseEvery.String())
 	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}

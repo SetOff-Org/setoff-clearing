@@ -42,6 +42,8 @@ func TestLoad(t *testing.T) {
 		"unknown key": valid + "\nport = 1\n",
 		"no data_dir": strings.Replace(valid, `data_dir = "data"`, "", 1),
 		"bad toml":    "data_dir = ",
+		"bad close":   "close_every = \"soon\"\n" + valid,
+		"close < 1m":  "close_every = \"5s\"\n" + valid,
 	} {
 		if _, err := Load(write(t, body)); err == nil {
 			t.Errorf("%s: loaded", name)

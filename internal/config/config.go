@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -28,6 +29,9 @@ type Config struct {
 	Decimals map[string]int `toml:"decimals"`
 	// Contract is the SetOff settlement contract windows settle through.
 	Contract string `toml:"contract"`
+	// CloseEvery closes the open window on a schedule, e.g. "1h". Empty
+	// windows are skipped. Unset: only the operator closes windows.
+	CloseEvery Duration `toml:"close_every"`
 	// Tokens maps each asset to its SEP-41 token contract on chain.
 	Tokens       map[string]string `toml:"tokens"`
 	Participants []Participant     `toml:"participant"`
@@ -42,6 +46,19 @@ func (c *Config) Addresses() map[string]string {
 		}
 	}
 	return out
+}
+
+// Duration is a TOML string such as "15m".
+type Duration struct{ time.Duration }
+
+// UnmarshalText parses a Go duration.
+func (d *Duration) UnmarshalText(b []byte) error {
+	v, err := time.ParseDuration(string(b))
+	if err != nil {
+		return err
+	}
+	d.Duration = v
+	return nil
 }
 
 // Load reads a config file. data_dir is resolved relative to it.
@@ -59,6 +76,9 @@ func Load(path string) (*Config, error) {
 	}
 	if c.DataDir == "" {
 		return nil, fmt.Errorf("%s: data_dir is required", path)
+	}
+	if d := c.CloseEvery.Duration; d != 0 && d < time.Minute {
+		return nil, fmt.Errorf("%s: close_every must be at least 1m", path)
 	}
 	if !filepath.IsAbs(c.DataDir) {
 		c.DataDir = filepath.Join(filepath.Dir(path), c.DataDir)

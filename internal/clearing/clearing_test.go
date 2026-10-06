@@ -1,6 +1,7 @@
 package clearing
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
@@ -239,5 +240,27 @@ func TestWindowsListsArchivesNewestFirst(t *testing.T) {
 	page, _ := c.Windows(3, 1)
 	if len(page) != 1 || page[0].Window != 2 {
 		t.Fatalf("page after 3: %+v", page)
+	}
+}
+
+func TestAutoCloseSkipsEmptyWindows(t *testing.T) {
+	c := open(t, t.TempDir())
+	owe(t, c, "a", "b", "1", 10)
+	ctx, cancel := context.WithCancel(context.Background())
+	closed := make(chan *Closed, 10)
+	go c.AutoClose(ctx, 5*time.Millisecond, func(w *Closed, err error) {
+		if err != nil {
+			t.Error(err)
+		}
+		closed <- w
+	})
+	first := <-closed
+	time.Sleep(50 * time.Millisecond) // several more ticks over an empty window
+	cancel()
+	if first.Window != 1 || len(closed) != 0 {
+		t.Fatalf("closed window %d, then %d more", first.Window, len(closed))
+	}
+	if w, _ := count(t, c); w != 2 {
+		t.Fatalf("open window is %d", w)
 	}
 }
