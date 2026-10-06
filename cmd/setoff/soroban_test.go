@@ -91,3 +91,17 @@ func TestSorobanRefusesBadInput(t *testing.T) {
 		}
 	}
 }
+
+func TestReportWritesCamt053(t *testing.T) {
+	path := setup(t)
+	var out bytes.Buffer
+	if err := runReport([]string{"--config", path, "--window", "1", "--participant", "b"}, &out); err != nil {
+		t.Fatal(err)
+	}
+	if s := out.String(); !strings.Contains(s, "camt.053.001.08") || strings.Count(s, "<Stmt>") != 1 || !strings.Contains(s, "<CdtDbtInd>CRDT</CdtDbtInd>") {
+		t.Fatalf("%s", s)
+	}
+	if err := runReport([]string{"--config", path}, &bytes.Buffer{}); err == nil {
+		t.Fatal("--window is required")
+	}
+}

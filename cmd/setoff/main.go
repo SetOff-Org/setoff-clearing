@@ -33,6 +33,7 @@ Usage:
   setoff net [--json] <obligations.csv|obligations.json|->
   setoff serve [--config setoff.toml]
   setoff soroban [--config setoff.toml] --window N [--network testnet] [--source operator] [--json]
+  setoff report [--config setoff.toml] --window N [--participant ID]   ISO 20022 camt.053
   setoff version
 
 CSV input needs the header: id,debtor,creditor,asset,amount
@@ -54,6 +55,8 @@ func main() {
 		err = runServe(os.Args[2:])
 	case "soroban":
 		err = runSoroban(os.Args[2:], os.Stdout)
+	case "report":
+		err = runReport(os.Args[2:], os.Stdout)
 	case "version":
 		fmt.Println("setoff", version)
 	case "-h", "--help", "help":
