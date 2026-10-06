@@ -16,7 +16,7 @@ assets = ["USDC", "EURC"]
 
 # On-chain settlement through the SetOff settlement contract (optional; used by
 # `setoff soroban`). Each participant below also gets its Stellar address.
-contract = "CCV7S3FEDA5TXR6IKS3R2PE3UZVET2U76SCTGBI3WDE6EKINKDV4WNGU"
+contract = "CCW6QCOSJTTJHDXJOVQ36NVIBAHBUVPMSZNOIJ3A444O6YMVHR4ZEYQV"
 
 [tokens]
 USDC = "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"

@@ -96,8 +96,8 @@ positions in at most one leg fewer than participants per asset.
 ```console
 $ setoff soroban --window 7 --network testnet
 # window 7: 1 submit call(s), then settle
-stellar contract invoke --id CCV7S3…WNGU --source operator --network testnet -- submit --obligations '[{"debtor":"GAIH3U…","creditor":"GBRPYH…","token":"CBIELT…","amount":"1450000000","reference":"5f2c…"}]'
-stellar contract invoke --id CCV7S3…WNGU --source operator --network testnet -- settle
+stellar contract invoke --id CCW6QC…EYQV --source operator --network testnet -- submit --obligations '[{"debtor":"GAIH3U…","creditor":"GBRPYH…","token":"CBIELT…","amount":"1450000000","reference":"5f2c…"}]'
+stellar contract invoke --id CCW6QC…EYQV --source operator --network testnet -- settle
 ```
 
 Each leg's reference is derived from the window and leg number, so a batch
