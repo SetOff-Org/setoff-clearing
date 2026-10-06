@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/SetOff-Org/setoff-clearing/internal/clearing"
+	"github.com/SetOff-Org/setoff-clearing/internal/report"
 )
 
 // Server serves one clearing store.
@@ -21,6 +22,7 @@ type Server struct {
 	OperatorKey  string
 	Log          *slog.Logger
 	Now          func() time.Time
+	Decimals     map[string]int // per asset, for reports
 }
 
 // Handler returns the routes.
@@ -31,6 +33,7 @@ type Server struct {
 //	POST /v1/window/close      operator: net, archive, open the next window
 //	GET  /v1/windows           participant or operator: archived windows, newest first (?before=n&limit=50)
 //	GET  /v1/windows/{n}       participant or operator: an archived window
+//	GET  /v1/windows/{n}/camt053  ISO 20022 statements: the caller's own, or all for the operator
 //	GET  /healthz
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
@@ -41,7 +44,26 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /v1/window/close", s.close)
 	mux.HandleFunc("GET /v1/windows", s.anyone(s.windows))
 	mux.HandleFunc("GET /v1/windows/{n}", s.anyone(s.archived))
+	mux.HandleFunc("GET /v1/windows/{n}/camt053", s.anyone(s.camt053))
 	return mux
+}
+
+func (s *Server) camt053(w http.ResponseWriter, r *http.Request) {
+	closed, ok := s.lookup(w, r)
+	if !ok {
+		return
+	}
+	opt := report.Options{Decimals: s.Decimals, Now: s.Now()}
+	if who, isParticipant := s.participant(r); isParticipant {
+		opt.Participant = who
+	}
+	out, err := report.Camt053(closed, opt)
+	if err != nil {
+		reply(w, http.StatusInternalServerError, errBody(err.Error()))
+		return
+	}
+	w.Header().Set("Content-Type", "application/xml")
+	_, _ = w.Write(out)
 }
 
 func bearer(r *http.Request) string {
@@ -166,21 +188,28 @@ func (s *Server) windows(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) archived(w http.ResponseWriter, r *http.Request) {
+	if closed, ok := s.lookup(w, r); ok {
+		reply(w, http.StatusOK, closed)
+	}
+}
+
+// lookup loads the archived window named in the path, replying with an error if it cannot.
+func (s *Server) lookup(w http.ResponseWriter, r *http.Request) (*clearing.Closed, bool) {
 	n, err := strconv.ParseUint(r.PathValue("n"), 10, 64)
 	if err != nil {
 		reply(w, http.StatusBadRequest, errBody("window must be a number"))
-		return
+		return nil, false
 	}
 	closed, err := s.Clearing.Window(n)
 	if errors.Is(err, clearing.ErrUnknownWindow) {
 		reply(w, http.StatusNotFound, errBody(err.Error()))
-		return
+		return nil, false
 	}
 	if err != nil {
 		reply(w, http.StatusInternalServerError, errBody(err.Error()))
-		return
+		return nil, false
 	}
-	reply(w, http.StatusOK, closed)
+	return closed, true
 }
 
 func errBody(msg string) map[string]string { return map[string]string{"error": msg} }

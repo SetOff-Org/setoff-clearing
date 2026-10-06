@@ -21,8 +21,10 @@ type Config struct {
 	DataDir        string `toml:"data_dir"`
 	OperatorKeyEnv string `toml:"operator_key_env"`
 	// Assets lists the asset codes obligations may use. Empty allows any.
-	Assets       []string      `toml:"assets"`
-	Participants []Participant `toml:"participant"`
+	Assets []string `toml:"assets"`
+	// Decimals per asset, used to express amounts in reports.
+	Decimals     map[string]int `toml:"decimals"`
+	Participants []Participant  `toml:"participant"`
 }
 
 // Load reads a config file. data_dir is resolved relative to it.

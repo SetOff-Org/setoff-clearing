@@ -23,3 +23,9 @@ key_env = "SETOFF_KEY_ANCHOR_US"
 [[participant]]
 id = "anchor-ke"
 key_env = "SETOFF_KEY_ANCHOR_KE"
+
+# Decimal places per asset. Amounts are integers in the smallest unit; reports
+# such as camt.053 statements show them in whole units.
+[decimals]
+USDC = 7
+EURC = 7

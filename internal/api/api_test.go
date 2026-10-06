@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -179,5 +180,34 @@ func TestWindowsAreListed(t *testing.T) {
 	}
 	if code, _ := call(t, srv, "GET", "/v1/windows", "", nil); code != http.StatusUnauthorized {
 		t.Errorf("no key: status %d", code)
+	}
+}
+
+func TestCamt053IsScopedToTheCaller(t *testing.T) {
+	srv := server(t, t.TempDir())
+	call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "1", "100"))
+	call(t, srv, "POST", "/v1/obligations", "key-c", owe("anchor-b", "1", "30"))
+	call(t, srv, "POST", "/v1/window/close", "op", nil)
+
+	get := func(key string) (int, string) {
+		req, _ := http.NewRequest("GET", srv.URL+"/v1/windows/1/camt053", nil)
+		req.Header.Set("Authorization", "Bearer "+key)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		b, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, string(b)
+	}
+	code, mine := get("key-a")
+	if code != http.StatusOK || strings.Count(mine, "<Stmt>") != 1 || strings.Contains(mine, "anchor-c:1") {
+		t.Fatalf("status %d:\n%s", code, mine)
+	}
+	if _, all := get("op"); strings.Count(all, "<Stmt>") != 3 {
+		t.Fatalf("the operator sees every statement:\n%s", all)
+	}
+	if code, _ := call(t, srv, "GET", "/v1/windows/9/camt053", "op", nil); code != http.StatusNotFound {
+		t.Fatalf("status %d", code)
 	}
 }
