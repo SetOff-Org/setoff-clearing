@@ -13,6 +13,8 @@ import (
 type Participant struct {
 	ID     string `toml:"id"`
 	KeyEnv string `toml:"key_env"`
+	// Address is the participant's Stellar account or contract, for on-chain settlement.
+	Address string `toml:"address"`
 }
 
 // Config is setoff.toml.
@@ -23,8 +25,23 @@ type Config struct {
 	// Assets lists the asset codes obligations may use. Empty allows any.
 	Assets []string `toml:"assets"`
 	// Decimals per asset, used to express amounts in reports.
-	Decimals     map[string]int `toml:"decimals"`
-	Participants []Participant  `toml:"participant"`
+	Decimals map[string]int `toml:"decimals"`
+	// Contract is the SetOff settlement contract windows settle through.
+	Contract string `toml:"contract"`
+	// Tokens maps each asset to its SEP-41 token contract on chain.
+	Tokens       map[string]string `toml:"tokens"`
+	Participants []Participant     `toml:"participant"`
+}
+
+// Addresses maps participant ids to their Stellar addresses, where set.
+func (c *Config) Addresses() map[string]string {
+	out := map[string]string{}
+	for _, p := range c.Participants {
+		if p.Address != "" {
+			out[p.ID] = p.Address
+		}
+	}
+	return out
 }
 
 // Load reads a config file. data_dir is resolved relative to it.

@@ -258,8 +258,12 @@ func (c *Clearing) Close(now time.Time) (*Closed, error) {
 }
 
 // Window returns an archived window.
-func (c *Clearing) Window(n uint64) (*Closed, error) {
-	b, err := os.ReadFile(c.windowPath(n))
+func (c *Clearing) Window(n uint64) (*Closed, error) { return ReadWindow(c.dir, n) }
+
+// ReadWindow reads archived window n from a data directory without opening
+// the store, so tools can read archives while the service runs.
+func ReadWindow(dir string, n uint64) (*Closed, error) {
+	b, err := os.ReadFile(windowPath(dir, n)) //nolint:gosec // G304: the data directory is the operator's
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrUnknownWindow
 	}
@@ -270,8 +274,10 @@ func (c *Clearing) Window(n uint64) (*Closed, error) {
 	return &w, json.Unmarshal(b, &w)
 }
 
-func (c *Clearing) windowPath(n uint64) string {
-	return filepath.Join(c.dir, "windows", fmt.Sprintf("%06d.json", n))
+func (c *Clearing) windowPath(n uint64) string { return windowPath(c.dir, n) }
+
+func windowPath(dir string, n uint64) string {
+	return filepath.Join(dir, "windows", fmt.Sprintf("%06d.json", n))
 }
 
 // View is one participant's slice of the open window.

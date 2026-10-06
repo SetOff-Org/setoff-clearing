@@ -10,19 +10,30 @@ operator_key_env = "SETOFF_OPERATOR_KEY"
 # Asset codes obligations may use. Leave out to allow any.
 assets = ["USDC", "EURC"]
 
-# Every participant and the environment variable holding its API key. A
-# participant can only record obligations it owes.
+# On-chain settlement through the SetOff settlement contract (optional; used by
+# `setoff soroban`). Each participant below also gets its Stellar address.
+contract = "CCV7S3FEDA5TXR6IKS3R2PE3UZVET2U76SCTGBI3WDE6EKINKDV4WNGU"
+
+[tokens]
+USDC = "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+EURC = "CCUUDM434BMZMYWYDITHFXHDMIVTGGD6T2I5UKNX5BSLXLW7HVR4MCGZ"
+
+# Every participant, the environment variable holding its API key and its
+# Stellar address. A participant can only record obligations it owes.
 [[participant]]
 id = "anchor-ng"
 key_env = "SETOFF_KEY_ANCHOR_NG"
+address = "GAIH3ULLFQ4DGSECF2AR555KZ4KNDGEKN4AFI4SU2M7B43MGK3QJZNSR"
 
 [[participant]]
 id = "anchor-us"
 key_env = "SETOFF_KEY_ANCHOR_US"
+address = "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H"
 
 [[participant]]
 id = "anchor-ke"
 key_env = "SETOFF_KEY_ANCHOR_KE"
+address = "GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B"
 
 # Decimal places per asset. Amounts are integers in the smallest unit; reports
 # such as camt.053 statements show them in whole units.

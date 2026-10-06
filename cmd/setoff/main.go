@@ -32,9 +32,13 @@ const usage = `setoff nets obligations between participants and runs a clearing 
 Usage:
   setoff net [--json] <obligations.csv|obligations.json|->
   setoff serve [--config setoff.toml]
+  setoff soroban [--config setoff.toml] --window N [--network testnet] [--source operator] [--json]
   setoff version
 
 CSV input needs the header: id,debtor,creditor,asset,amount
+
+soroban prints the Stellar CLI calls that settle a closed window through the
+SetOff settlement contract. Each submit must be authorized by its debtors.
 `
 
 func main() {
@@ -48,6 +52,8 @@ func main() {
 		err = runNet(os.Args[2:])
 	case "serve":
 		err = runServe(os.Args[2:])
+	case "soroban":
+		err = runSoroban(os.Args[2:], os.Stdout)
 	case "version":
 		fmt.Println("setoff", version)
 	case "-h", "--help", "help":
