@@ -211,3 +211,29 @@ func TestCamt053IsScopedToTheCaller(t *testing.T) {
 		t.Fatalf("status %d", code)
 	}
 }
+
+func TestRequestsAreTaggedAndCountedByRoute(t *testing.T) {
+	srv := server(t, t.TempDir())
+	for _, n := range []string{"7", "8"} {
+		call(t, srv, "GET", "/v1/windows/"+n, "key-a", nil)
+	}
+	req, _ := http.NewRequest("GET", srv.URL+"/healthz", nil)
+	req.Header.Set("X-Request-ID", "trace-1")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.Header.Get("X-Request-ID") != "trace-1" {
+		t.Fatal("request id not echoed")
+	}
+	resp, err = http.Get(srv.URL + "/metrics")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(body), `setoff_clearing_requests_total{route="/v1/windows/{n}",status="404"} 2`) {
+		t.Fatalf("windows 7 and 8 should share one label:\n%s", body)
+	}
+}

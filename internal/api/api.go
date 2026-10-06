@@ -23,6 +23,7 @@ type Server struct {
 	Log          *slog.Logger
 	Now          func() time.Time
 	Decimals     map[string]int // per asset, for reports
+	Metrics      Metrics
 }
 
 // Handler returns the routes.
@@ -35,6 +36,9 @@ type Server struct {
 //	GET  /v1/windows/{n}       participant or operator: an archived window
 //	GET  /v1/windows/{n}/camt053  ISO 20022 statements: the caller's own, or all for the operator
 //	GET  /healthz
+//	GET  /metrics
+//
+// Every response carries an X-Request-ID, echoed from the request when given.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { reply(w, 200, map[string]string{"status": "ok"}) })
@@ -45,7 +49,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/windows", s.anyone(s.windows))
 	mux.HandleFunc("GET /v1/windows/{n}", s.anyone(s.archived))
 	mux.HandleFunc("GET /v1/windows/{n}/camt053", s.anyone(s.camt053))
-	return mux
+	mux.Handle("GET /metrics", &s.Metrics)
+	return s.observe(mux)
 }
 
 func (s *Server) camt053(w http.ResponseWriter, r *http.Request) {
