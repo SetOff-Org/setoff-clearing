@@ -17,10 +17,12 @@ type Participant struct {
 
 // Config is setoff.toml.
 type Config struct {
-	Listen         string        `toml:"listen"`
-	DataDir        string        `toml:"data_dir"`
-	OperatorKeyEnv string        `toml:"operator_key_env"`
-	Participants   []Participant `toml:"participant"`
+	Listen         string `toml:"listen"`
+	DataDir        string `toml:"data_dir"`
+	OperatorKeyEnv string `toml:"operator_key_env"`
+	// Assets lists the asset codes obligations may use. Empty allows any.
+	Assets       []string      `toml:"assets"`
+	Participants []Participant `toml:"participant"`
 }
 
 // Load reads a config file. data_dir is resolved relative to it.

@@ -45,6 +45,19 @@ type Clearing struct {
 	ids         map[string]bool
 	members     map[string]bool
 	gross       map[string]*big.Int // per asset, for O(1) overflow checks
+	assets      map[string]bool     // nil: any asset
+}
+
+// RestrictAssets limits new obligations to the given assets, so a mistyped
+// code cannot open a book of its own that never nets against the real one.
+// Obligations already in the open window are kept.
+func (c *Clearing) RestrictAssets(assets []string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.assets = map[string]bool{}
+	for _, a := range assets {
+		c.assets[a] = true
+	}
 }
 
 // admit records an obligation already known to be valid.
@@ -163,6 +176,9 @@ func (c *Clearing) Submit(debtor string, s Submission) (string, uint64, error) {
 	}
 	if !c.members[s.Creditor] {
 		return "", 0, fmt.Errorf("%w: %q is not a participant", ErrInvalid, s.Creditor)
+	}
+	if c.assets != nil && !c.assets[s.Asset] {
+		return "", 0, fmt.Errorf("%w: asset %q is not cleared here", ErrInvalid, s.Asset)
 	}
 	o := netting.Obligation{ID: debtor + ":" + s.Reference, Debtor: debtor, Creditor: s.Creditor, Asset: s.Asset, Amount: s.Amount}
 	if c.ids[o.ID] {

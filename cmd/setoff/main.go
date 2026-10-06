@@ -151,6 +151,9 @@ func runServe(args []string) error {
 	if err != nil {
 		return err
 	}
+	if len(cfg.Assets) > 0 {
+		store.RestrictAssets(cfg.Assets)
+	}
 	logger := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 	s := &api.Server{Clearing: store, Participants: keys, OperatorKey: op, Log: logger, Now: time.Now}
 	srv := &http.Server{Addr: cfg.Listen, Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}

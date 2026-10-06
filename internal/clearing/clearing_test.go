@@ -191,3 +191,13 @@ func TestAWindowCannotOverflowAtClose(t *testing.T) {
 		t.Fatalf("the window must still net: %v", err)
 	}
 }
+
+func TestAssetsCanBeRestricted(t *testing.T) {
+	c := open(t, t.TempDir())
+	owe(t, c, "a", "b", "before", 1) // any asset until restricted
+	c.RestrictAssets([]string{"USDC", "EURC"})
+	owe(t, c, "a", "b", "usdc", 1)
+	if _, _, err := c.Submit("a", Submission{Reference: "typo", Creditor: "b", Asset: "USCD", Amount: netting.NewAmount(1)}); !errors.Is(err, ErrInvalid) {
+		t.Fatalf("a mistyped asset must be refused, got %v", err)
+	}
+}

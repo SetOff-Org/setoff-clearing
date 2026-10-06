@@ -7,6 +7,9 @@ data_dir = "data"
 # Bearer key the operator uses to close windows.
 operator_key_env = "SETOFF_OPERATOR_KEY"
 
+# Asset codes obligations may use. Leave out to allow any.
+assets = ["USDC", "EURC"]
+
 # Every participant and the environment variable holding its API key. A
 # participant can only record obligations it owes.
 [[participant]]
