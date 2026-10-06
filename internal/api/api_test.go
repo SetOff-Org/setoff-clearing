@@ -3,6 +3,7 @@ package api_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -157,5 +158,26 @@ func TestMeIsScopedToTheCaller(t *testing.T) {
 		if code, _ := call(t, srv, "GET", "/v1/me", key, nil); code != http.StatusUnauthorized {
 			t.Errorf("key %q: status %d", key, code)
 		}
+	}
+}
+
+func TestWindowsAreListed(t *testing.T) {
+	srv := server(t, t.TempDir())
+	for i := range 2 {
+		call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", fmt.Sprint(i), "5"))
+		call(t, srv, "POST", "/v1/window/close", "op", nil)
+	}
+	code, out := call(t, srv, "GET", "/v1/windows?limit=1", "key-b", nil)
+	list, _ := out["windows"].([]any)
+	if code != http.StatusOK || len(list) != 1 || list[0].(map[string]any)["window"].(float64) != 2 {
+		t.Fatalf("status %d: %v", code, out)
+	}
+	for _, q := range []string{"?limit=0", "?limit=x", "?before=-1"} {
+		if code, _ := call(t, srv, "GET", "/v1/windows"+q, "key-b", nil); code != http.StatusBadRequest {
+			t.Errorf("%s: status %d", q, code)
+		}
+	}
+	if code, _ := call(t, srv, "GET", "/v1/windows", "", nil); code != http.StatusUnauthorized {
+		t.Errorf("no key: status %d", code)
 	}
 }

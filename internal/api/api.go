@@ -29,6 +29,7 @@ type Server struct {
 //	GET  /v1/window            participant or operator: open window preview
 //	GET  /v1/me                participant: own obligations, positions and plan legs
 //	POST /v1/window/close      operator: net, archive, open the next window
+//	GET  /v1/windows           participant or operator: archived windows, newest first (?before=n&limit=50)
 //	GET  /v1/windows/{n}       participant or operator: an archived window
 //	GET  /healthz
 func (s *Server) Handler() http.Handler {
@@ -38,6 +39,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/window", s.anyone(s.preview))
 	mux.HandleFunc("GET /v1/me", s.me)
 	mux.HandleFunc("POST /v1/window/close", s.close)
+	mux.HandleFunc("GET /v1/windows", s.anyone(s.windows))
 	mux.HandleFunc("GET /v1/windows/{n}", s.anyone(s.archived))
 	return mux
 }
@@ -134,6 +136,33 @@ func (s *Server) close(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	reply(w, http.StatusOK, closed)
+}
+
+func (s *Server) windows(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	before, limit := uint64(0), 50
+	if v := q.Get("before"); v != "" {
+		n, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			reply(w, http.StatusBadRequest, errBody("before must be a window number"))
+			return
+		}
+		before = n
+	}
+	if v := q.Get("limit"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 || n > 500 {
+			reply(w, http.StatusBadRequest, errBody("limit must be 1-500"))
+			return
+		}
+		limit = n
+	}
+	list, err := s.Clearing.Windows(before, limit)
+	if err != nil {
+		reply(w, http.StatusInternalServerError, errBody(err.Error()))
+		return
+	}
+	reply(w, http.StatusOK, map[string]any{"windows": list})
 }
 
 func (s *Server) archived(w http.ResponseWriter, r *http.Request) {

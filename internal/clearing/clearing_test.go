@@ -223,3 +223,21 @@ func TestMineShowsOnlyTheParticipantsSide(t *testing.T) {
 		t.Fatalf("%+v", v)
 	}
 }
+
+func TestWindowsListsArchivesNewestFirst(t *testing.T) {
+	c := open(t, t.TempDir())
+	for i := range 3 {
+		owe(t, c, "a", "b", "x", int64(i+1))
+		if _, err := c.Close(time.Date(2026, 10, 6, i, 0, 0, 0, time.UTC)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	all, err := c.Windows(0, 10)
+	if err != nil || len(all) != 3 || all[0].Window != 3 || all[2].Window != 1 || all[0].Obligations != 1 {
+		t.Fatalf("%+v %v", all, err)
+	}
+	page, _ := c.Windows(3, 1)
+	if len(page) != 1 || page[0].Window != 2 {
+		t.Fatalf("page after 3: %+v", page)
+	}
+}

@@ -309,3 +309,36 @@ func (c *Clearing) Mine(participant string) (*View, error) {
 	}
 	return v, nil
 }
+
+// Summary describes an archived window.
+type Summary struct {
+	Window      uint64    `json:"window"`
+	ClosedAt    time.Time `json:"closed_at"`
+	Obligations int       `json:"obligations"`
+	Transfers   int       `json:"transfers"`
+}
+
+// Windows lists up to limit archived windows numbered below before (0: no
+// bound), newest first.
+func (c *Clearing) Windows(before uint64, limit int) ([]Summary, error) {
+	numbers, err := numbered(filepath.Join(c.dir, "windows"), "", ".json")
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(numbers, func(i, j int) bool { return numbers[i] > numbers[j] })
+	out := []Summary{}
+	for _, n := range numbers {
+		if len(out) == limit {
+			break
+		}
+		if before != 0 && n >= before {
+			continue
+		}
+		w, err := c.Window(n)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, Summary{Window: w.Window, ClosedAt: w.ClosedAt, Obligations: len(w.Obligations), Transfers: len(w.Netting.Transfers)})
+	}
+	return out, nil
+}
