@@ -1,0 +1,236 @@
+openapi: 3.1.0
+info:
+  title: SetOff clearing service
+  version: "1"
+  description: |
+    Participants record what they owe each other into the open settlement
+    window. Closing a window nets it multilaterally, archives it, and opens
+    the next. Amounts are integers in each asset's smallest unit, as strings.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+servers:
+  - url: http://127.0.0.1:7500
+security:
+  - participant: []
+  - operator: []
+paths:
+  /healthz:
+    get:
+      summary: Liveness
+      security: []
+      responses:
+        "200":
+          description: The process is up.
+  /metrics:
+    get:
+      summary: Prometheus counters by route pattern and status
+      security: []
+      responses:
+        "200":
+          description: Prometheus text exposition format.
+          content:
+            text/plain: {}
+  /v1/obligations:
+    post:
+      summary: Record an obligation the caller owes
+      description: The debtor is always the caller; nobody can commit someone else to pay.
+      security:
+        - participant: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [reference, creditor, asset, amount]
+              properties:
+                reference: { type: string, minLength: 1, maxLength: 64, description: Unique per debtor within a window. }
+                creditor: { type: string, description: Participant id. }
+                asset: { type: string }
+                amount: { $ref: "#/components/schemas/Amount" }
+      responses:
+        "201":
+          description: Recorded and fsynced.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, description: "<debtor>:<reference>" }
+                  window: { type: integer }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+        "409":
+          description: The reference was already used in this window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /v1/window:
+    get:
+      summary: The open window, netted live
+      responses:
+        "200":
+          description: Window number, obligation count and netting.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: integer }
+                  obligations: { type: integer }
+                  netting: { $ref: "#/components/schemas/Netting" }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/me:
+    get:
+      summary: The caller's side of the open window
+      security:
+        - participant: []
+      responses:
+        "200":
+          description: Obligations owed by or to the caller, its net positions, and the plan legs it pays or receives.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: integer }
+                  obligations: { type: array, items: { $ref: "#/components/schemas/Obligation" } }
+                  positions: { type: array, items: { $ref: "#/components/schemas/Position" } }
+                  transfers: { type: array, items: { $ref: "#/components/schemas/Transfer" } }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/window/close:
+    post:
+      summary: Net, archive and open the next window
+      security:
+        - operator: []
+      responses:
+        "200":
+          description: The closed window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Closed" }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/windows:
+    get:
+      summary: Archived windows, newest first
+      parameters:
+        - { name: before, in: query, schema: { type: integer }, description: Only windows numbered below this. }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 500, default: 50 } }
+      responses:
+        "200":
+          description: Window summaries.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  windows:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        window: { type: integer }
+                        closed_at: { type: string, format: date-time }
+                        obligations: { type: integer }
+                        transfers: { type: integer }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/windows/{n}:
+    get:
+      summary: An archived window
+      parameters:
+        - { name: n, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: The window as closed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Closed" }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /v1/windows/{n}/camt053:
+    get:
+      summary: ISO 20022 camt.053 statements for an archived window
+      description: |
+        One statement per participant and asset. Participants receive only
+        their own statements; the operator receives all of them.
+      parameters:
+        - { name: n, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: A camt.053.001.08 BankToCustomerStatement document.
+          content:
+            application/xml: {}
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    participant:
+      type: http
+      scheme: bearer
+      description: A participant's key, from its key_env.
+    operator:
+      type: http
+      scheme: bearer
+      description: The operator's key, from operator_key_env.
+  schemas:
+    Amount:
+      type: string
+      pattern: "^[1-9][0-9]*$"
+      description: A positive integer in the asset's smallest unit.
+    Obligation:
+      type: object
+      properties:
+        id: { type: string }
+        debtor: { type: string }
+        creditor: { type: string }
+        asset: { type: string }
+        amount: { $ref: "#/components/schemas/Amount" }
+    Position:
+      type: object
+      properties:
+        asset: { type: string }
+        participant: { type: string }
+        net: { type: string, description: Positive receives, negative pays. }
+    Transfer:
+      type: object
+      properties:
+        asset: { type: string }
+        from: { type: string }
+        to: { type: string }
+        amount: { $ref: "#/components/schemas/Amount" }
+    Netting:
+      type: object
+      properties:
+        positions: { type: array, items: { $ref: "#/components/schemas/Position" } }
+        transfers: { type: array, items: { $ref: "#/components/schemas/Transfer" } }
+        assets:
+          type: array
+          items:
+            type: object
+            properties:
+              asset: { type: string }
+              obligations: { type: integer }
+              gross: { type: string }
+              settled: { type: string }
+              transfers: { type: integer }
+    Closed:
+      type: object
+      properties:
+        window: { type: integer }
+        closed_at: { type: string, format: date-time }
+        obligations: { type: array, items: { $ref: "#/components/schemas/Obligation" } }
+        netting: { $ref: "#/components/schemas/Netting" }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+  responses:
+    Error:
+      description: See `error`.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
