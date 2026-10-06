@@ -169,3 +169,25 @@ func TestCorruptionInsideTheJournalIsStillAnError(t *testing.T) {
 		t.Fatal("a complete but unreadable line is corruption, not a torn write")
 	}
 }
+
+func TestAWindowCannotOverflowAtClose(t *testing.T) {
+	c := open(t, t.TempDir())
+	big, err := netting.ParseAmount("100000000000000000000000000000000000000") // 1e38; i128 max is about 1.7e38
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := c.Submit("a", Submission{Reference: "1", Creditor: "b", Asset: "USDC", Amount: big}); err != nil {
+		t.Fatal(err)
+	}
+	// Different parties, same asset: the gross total is what overflows.
+	if _, _, err := c.Submit("c", Submission{Reference: "2", Creditor: "a", Asset: "USDC", Amount: big}); !errors.Is(err, ErrInvalid) {
+		t.Fatalf("want ErrInvalid for an overflowing window, got %v", err)
+	}
+	// Another asset has its own total.
+	if _, _, err := c.Submit("c", Submission{Reference: "3", Creditor: "a", Asset: "EURC", Amount: big}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Close(time.Now()); err != nil {
+		t.Fatalf("the window must still net: %v", err)
+	}
+}

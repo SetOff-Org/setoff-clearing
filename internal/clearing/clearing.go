@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"sort"
@@ -43,6 +44,17 @@ type Clearing struct {
 	obligations []netting.Obligation
 	ids         map[string]bool
 	members     map[string]bool
+	gross       map[string]*big.Int // per asset, for O(1) overflow checks
+}
+
+// admit records an obligation already known to be valid.
+func (c *Clearing) admit(o netting.Obligation) {
+	c.obligations = append(c.obligations, o)
+	c.ids[o.ID] = true
+	if c.gross[o.Asset] == nil {
+		c.gross[o.Asset] = new(big.Int)
+	}
+	c.gross[o.Asset].Add(c.gross[o.Asset], &o.Amount.Int)
 }
 
 // Open loads (or creates) the store in dir. members lists every participant id.
@@ -50,7 +62,7 @@ func Open(dir string, members []string) (*Clearing, error) {
 	if err := os.MkdirAll(filepath.Join(dir, "windows"), 0o750); err != nil {
 		return nil, err
 	}
-	c := &Clearing{dir: dir, ids: map[string]bool{}, members: map[string]bool{}}
+	c := &Clearing{dir: dir, ids: map[string]bool{}, members: map[string]bool{}, gross: map[string]*big.Int{}}
 	for _, m := range members {
 		c.members[m] = true
 	}
@@ -100,8 +112,7 @@ func Open(dir string, members []string) (*Clearing, error) {
 		if err := json.Unmarshal(line, &o); err != nil {
 			return nil, fmt.Errorf("journal line %d: %w", i+1, err)
 		}
-		c.obligations = append(c.obligations, o)
-		c.ids[o.ID] = true
+		c.admit(o)
 	}
 	return c, nil
 }
@@ -157,9 +168,13 @@ func (c *Clearing) Submit(debtor string, s Submission) (string, uint64, error) {
 	if c.ids[o.ID] {
 		return "", 0, ErrDuplicate
 	}
-	// Validate against the whole window so totals can never overflow at close.
-	if _, err := netting.Net(append(append([]netting.Obligation{}, c.obligations...), o)); err != nil {
+	if err := netting.Validate(o); err != nil {
 		return "", 0, fmt.Errorf("%w: %w", ErrInvalid, err)
+	}
+	// Bounding the asset's gross bounds every total the window can produce,
+	// so Close can never overflow.
+	if total := new(big.Int).Add(c.grossOf(o.Asset), &o.Amount.Int); !netting.InRange(total) {
+		return "", 0, fmt.Errorf("%w: the window's %s total would overflow", ErrInvalid, o.Asset)
 	}
 	line, err := json.Marshal(o)
 	if err != nil {
@@ -176,9 +191,15 @@ func (c *Clearing) Submit(debtor string, s Submission) (string, uint64, error) {
 	if err := f.Sync(); err != nil {
 		return "", 0, err
 	}
-	c.obligations = append(c.obligations, o)
-	c.ids[o.ID] = true
+	c.admit(o)
 	return o.ID, c.window, nil
+}
+
+func (c *Clearing) grossOf(asset string) *big.Int {
+	if g := c.gross[asset]; g != nil {
+		return g
+	}
+	return new(big.Int)
 }
 
 // Preview nets the open window without closing it.
@@ -216,7 +237,7 @@ func (c *Clearing) Close(now time.Time) (*Closed, error) {
 		return nil, err
 	}
 	c.window++
-	c.obligations, c.ids = nil, map[string]bool{}
+	c.obligations, c.ids, c.gross = nil, map[string]bool{}, map[string]*big.Int{}
 	return closed, nil
 }
 

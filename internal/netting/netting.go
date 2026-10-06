@@ -125,17 +125,10 @@ func Net(obligations []Obligation) (*Result, error) {
 	gross := map[string]*big.Int{}
 
 	for _, o := range obligations {
-		for field, v := range map[string]string{"id": o.ID, "debtor": o.Debtor, "creditor": o.Creditor, "asset": o.Asset} {
-			if v == "" {
-				return nil, fmt.Errorf("obligation %q: %s is empty", o.ID, field)
-			}
+		if err := Validate(o); err != nil {
+			return nil, err
 		}
-		switch {
-		case o.Amount.Sign() <= 0:
-			return nil, fmt.Errorf("obligation %s: amount must be positive", o.ID)
-		case o.Debtor == o.Creditor:
-			return nil, fmt.Errorf("obligation %s: debtor and creditor are the same", o.ID)
-		case ids[o.ID]:
+		if ids[o.ID] {
 			return nil, fmt.Errorf("obligation %s: duplicate id", o.ID)
 		}
 		ids[o.ID] = true
@@ -201,6 +194,28 @@ func Net(obligations []Obligation) (*Result, error) {
 	}
 	return res, nil
 }
+
+// Validate checks one obligation on its own: every field set, a positive
+// amount, and different parties.
+func Validate(o Obligation) error {
+	for _, f := range [...]struct{ name, v string }{{"id", o.ID}, {"debtor", o.Debtor}, {"creditor", o.Creditor}, {"asset", o.Asset}} {
+		if f.v == "" {
+			return fmt.Errorf("obligation %q: %s is empty", o.ID, f.name)
+		}
+	}
+	switch {
+	case o.Amount.Sign() <= 0:
+		return fmt.Errorf("obligation %s: amount must be positive", o.ID)
+	case o.Debtor == o.Creditor:
+		return fmt.Errorf("obligation %s: debtor and creditor are the same", o.ID)
+	}
+	return nil
+}
+
+// InRange reports whether v fits the engine's i128 amounts. A window nets
+// without overflow exactly when each asset's gross total is in range, since
+// no position or settled total can exceed its asset's gross.
+func InRange(v *big.Int) bool { return checked(v) == nil }
 
 func addTo(m map[string]*big.Int, who string, delta *big.Int) error {
 	if m[who] == nil {
