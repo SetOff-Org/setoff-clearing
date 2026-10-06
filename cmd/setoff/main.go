@@ -156,7 +156,14 @@ func runServe(args []string) error {
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 	s := &api.Server{Clearing: store, Participants: keys, OperatorKey: op, Log: logger, Now: time.Now, Decimals: cfg.Decimals}
-	srv := &http.Server{Addr: cfg.Listen, Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
+	srv := &http.Server{
+		Addr:              cfg.Listen,
+		Handler:           s.Handler(),
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
