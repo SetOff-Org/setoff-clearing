@@ -20,6 +20,9 @@ All notable changes to this project are documented here. The format follows
   submitting the netted plan with deterministic references.
 - `close_every` to close windows on a schedule, and signed, retried webhooks
   on every close.
+- SEP-10 sign-in: participants authenticate with their Stellar accounts and
+  get short-lived bearer tokens; `/.well-known/stellar.toml` publishes the
+  signing key.
 - An optional asset allowlist.
 - Identical resubmissions return the original obligation instead of a 409.
 - Request IDs, structured access logs and Prometheus metrics by route.

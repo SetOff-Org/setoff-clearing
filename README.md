@@ -54,6 +54,13 @@ setoff serve
 participant has its own key; the service refuses to start if two parties share
 a key, so nobody can act as anyone else.
 
+**Signing in with a Stellar account.** With `[sep10]` configured, a participant
+can skip API keys: `GET /auth?account=G…` returns a challenge, the participant
+signs it with its account key, and `POST /auth` returns a bearer token valid
+for an hour (SEP-10, with the signing key published at
+`/.well-known/stellar.toml`). A participant controlled by a
+[Tessera](https://github.com/Use-Tessera) threshold group signs in the same way.
+
 | Route | Who | What |
 |---|---|---|
 | `POST /v1/obligations` | participant | `{"reference", "creditor", "asset", "amount"}`. The debtor is always the caller: you can only commit yourself to pay |
@@ -63,6 +70,7 @@ a key, so nobody can act as anyone else.
 | `GET /v1/windows` | any | Archived windows, newest first |
 | `GET /v1/windows/{n}` | any | An archived window |
 | `GET /v1/windows/{n}/camt053` | any | camt.053 statements: your own, or all of them for the operator |
+| `GET /auth`, `POST /auth` | open | SEP-10 challenge and token, with `[sep10]` |
 | `GET /metrics` | open | Prometheus counters by route |
 
 The full schema is in [`api/openapi.yaml`](api/openapi.yaml).
@@ -111,8 +119,7 @@ in the statement.
 
 ## Roadmap
 
-1. SEP-10 authentication for participants instead of API keys.
-2. Submitting settlement batches directly, collecting debtors' authorization
+1. Submitting settlement batches directly, collecting debtors' authorization
    entries over the API.
 
 ## License
