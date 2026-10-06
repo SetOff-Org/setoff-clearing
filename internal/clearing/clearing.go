@@ -273,3 +273,39 @@ func (c *Clearing) Window(n uint64) (*Closed, error) {
 func (c *Clearing) windowPath(n uint64) string {
 	return filepath.Join(c.dir, "windows", fmt.Sprintf("%06d.json", n))
 }
+
+// View is one participant's slice of the open window.
+type View struct {
+	Window      uint64               `json:"window"`
+	Obligations []netting.Obligation `json:"obligations"` // owed by or to the participant
+	Positions   []netting.Position   `json:"positions"`   // the participant's net per asset
+	Transfers   []netting.Transfer   `json:"transfers"`   // plan legs the participant pays or receives
+}
+
+// Mine returns what the open window means for one participant.
+func (c *Clearing) Mine(participant string) (*View, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	res, err := netting.Net(c.obligations)
+	if err != nil {
+		return nil, err
+	}
+	v := &View{Window: c.window, Obligations: []netting.Obligation{}, Positions: []netting.Position{}, Transfers: []netting.Transfer{}}
+	for _, o := range c.obligations {
+		if o.Debtor == participant || o.Creditor == participant {
+			v.Obligations = append(v.Obligations, o)
+		}
+	}
+	sort.Slice(v.Obligations, func(i, j int) bool { return v.Obligations[i].ID < v.Obligations[j].ID })
+	for _, p := range res.Positions {
+		if p.Participant == participant {
+			v.Positions = append(v.Positions, p)
+		}
+	}
+	for _, t := range res.Transfers {
+		if t.From == participant || t.To == participant {
+			v.Transfers = append(v.Transfers, t)
+		}
+	}
+	return v, nil
+}

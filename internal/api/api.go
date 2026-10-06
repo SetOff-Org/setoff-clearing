@@ -27,6 +27,7 @@ type Server struct {
 //
 //	POST /v1/obligations       participant: {"reference","creditor","asset","amount"}
 //	GET  /v1/window            participant or operator: open window preview
+//	GET  /v1/me                participant: own obligations, positions and plan legs
 //	POST /v1/window/close      operator: net, archive, open the next window
 //	GET  /v1/windows/{n}       participant or operator: an archived window
 //	GET  /healthz
@@ -35,6 +36,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { reply(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("POST /v1/obligations", s.submit)
 	mux.HandleFunc("GET /v1/window", s.anyone(s.preview))
+	mux.HandleFunc("GET /v1/me", s.me)
 	mux.HandleFunc("POST /v1/window/close", s.close)
 	mux.HandleFunc("GET /v1/windows/{n}", s.anyone(s.archived))
 	return mux
@@ -104,6 +106,20 @@ func (s *Server) preview(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	reply(w, http.StatusOK, map[string]any{"window": window, "obligations": n, "netting": res})
+}
+
+func (s *Server) me(w http.ResponseWriter, r *http.Request) {
+	who, ok := s.participant(r)
+	if !ok {
+		reply(w, http.StatusUnauthorized, errBody("participant key required"))
+		return
+	}
+	v, err := s.Clearing.Mine(who)
+	if err != nil {
+		reply(w, http.StatusInternalServerError, errBody(err.Error()))
+		return
+	}
+	reply(w, http.StatusOK, v)
 }
 
 func (s *Server) close(w http.ResponseWriter, r *http.Request) {

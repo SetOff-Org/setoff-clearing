@@ -201,3 +201,25 @@ func TestAssetsCanBeRestricted(t *testing.T) {
 		t.Fatalf("a mistyped asset must be refused, got %v", err)
 	}
 }
+
+func TestMineShowsOnlyTheParticipantsSide(t *testing.T) {
+	c := open(t, t.TempDir())
+	owe(t, c, "a", "b", "1", 100)
+	owe(t, c, "b", "c", "1", 70)
+	owe(t, c, "c", "a", "1", 20)
+	v, err := c.Mine("a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(v.Obligations) != 2 || len(v.Positions) != 1 || v.Positions[0].Net.String() != "-80" {
+		t.Fatalf("%+v", v)
+	}
+	for _, tr := range v.Transfers {
+		if tr.From != "a" && tr.To != "a" {
+			t.Fatalf("leg %+v does not involve a", tr)
+		}
+	}
+	if v, _ := c.Mine("nobody"); len(v.Obligations)+len(v.Positions)+len(v.Transfers) != 0 {
+		t.Fatalf("%+v", v)
+	}
+}

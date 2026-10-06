@@ -140,3 +140,22 @@ func TestBadRequests(t *testing.T) {
 		t.Error("unknown window served")
 	}
 }
+
+func TestMeIsScopedToTheCaller(t *testing.T) {
+	srv := server(t, t.TempDir())
+	call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "1", "100"))
+	call(t, srv, "POST", "/v1/obligations", "key-b", owe("anchor-c", "1", "60"))
+
+	code, me := call(t, srv, "GET", "/v1/me", "key-c", nil)
+	if code != http.StatusOK || len(me["obligations"].([]any)) != 1 {
+		t.Fatalf("status %d: %v", code, me)
+	}
+	if pos := me["positions"].([]any); len(pos) != 1 || pos[0].(map[string]any)["net"] != "60" {
+		t.Fatalf("%v", me)
+	}
+	for _, key := range []string{"", "op"} {
+		if code, _ := call(t, srv, "GET", "/v1/me", key, nil); code != http.StatusUnauthorized {
+			t.Errorf("key %q: status %d", key, code)
+		}
+	}
+}
