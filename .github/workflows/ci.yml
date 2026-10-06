@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - run: go vet ./...
+      - run: go test -race -count=1 ./...
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+
+  # The Rust engine is the reference; its vectors must match ours exactly.
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: SetOff-Org/setoff-engine
+          path: upstream
+      - run: diff -r upstream/tests/vectors testdata/vectors
+
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No stray working files
+        run: |
+          bad=$(git ls-files | grep -Ei '(^|/)(ISSUE_[0-9]+.*|.*_SUMMARY\.md|IMPLEMENTATION_.*|PR\.md|pr_body\.md|.*\.bak|.*\.orig)$' || true)
+          if [ -n "$bad" ]; then echo "Remove these files from the PR:"; echo "$bad"; exit 1; fi
