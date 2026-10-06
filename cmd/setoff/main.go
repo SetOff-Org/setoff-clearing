@@ -66,7 +66,7 @@ func main() {
 func readObligations(path string) ([]netting.Obligation, error) {
 	var r io.Reader = os.Stdin
 	if path != "-" {
-		f, err := os.Open(path)
+		f, err := os.Open(path) //nolint:gosec // G304: the user names the file to net
 		if err != nil {
 			return nil, err
 		}

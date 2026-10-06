@@ -45,7 +45,7 @@ type Clearing struct {
 
 // Open loads (or creates) the store in dir. members lists every participant id.
 func Open(dir string, members []string) (*Clearing, error) {
-	if err := os.MkdirAll(filepath.Join(dir, "windows"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "windows"), 0o750); err != nil {
 		return nil, err
 	}
 	c := &Clearing{dir: dir, ids: map[string]bool{}, members: map[string]bool{}}
@@ -100,7 +100,7 @@ func (c *Clearing) Submit(debtor string, s Submission) (string, uint64, error) {
 	}
 	// Validate against the whole window so totals can never overflow at close.
 	if _, err := netting.Net(append(append([]netting.Obligation{}, c.obligations...), o)); err != nil {
-		return "", 0, fmt.Errorf("%w: %v", ErrInvalid, err)
+		return "", 0, fmt.Errorf("%w: %w", ErrInvalid, err)
 	}
 	line, err := json.Marshal(o)
 	if err != nil {
