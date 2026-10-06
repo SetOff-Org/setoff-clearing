@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -52,8 +54,28 @@ func Open(dir string, members []string) (*Clearing, error) {
 	for _, m := range members {
 		c.members[m] = true
 	}
-	closed, _ := filepath.Glob(filepath.Join(dir, "windows", "*.json"))
-	c.window = uint64(len(closed)) + 1
+	// The open window follows the newest archived one. Each window has its own
+	// journal, so one left behind by a crash during Close belongs to an
+	// archived window: it is discarded, never replayed into the next window.
+	archived, err := numbered(filepath.Join(dir, "windows"), "", ".json")
+	if err != nil {
+		return nil, err
+	}
+	for _, n := range archived {
+		c.window = max(c.window, n)
+	}
+	c.window++
+	journals, err := numbered(dir, "open-", ".jsonl")
+	if err != nil {
+		return nil, err
+	}
+	for _, n := range journals {
+		if n < c.window {
+			if err := os.Remove(c.journalFor(n)); err != nil {
+				return nil, err
+			}
+		}
+	}
 	f, err := os.Open(c.journal())
 	if errors.Is(err, os.ErrNotExist) {
 		return c, nil
@@ -74,7 +96,34 @@ func Open(dir string, members []string) (*Clearing, error) {
 	return c, sc.Err()
 }
 
-func (c *Clearing) journal() string { return filepath.Join(c.dir, "open.jsonl") }
+func (c *Clearing) journal() string { return c.journalFor(c.window) }
+
+func (c *Clearing) journalFor(n uint64) string {
+	return filepath.Join(c.dir, fmt.Sprintf("open-%06d.jsonl", n))
+}
+
+// numbered lists the numbers n of files in dir named prefix + n + suffix.
+func numbered(dir, prefix, suffix string) ([]uint64, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var out []uint64
+	for _, e := range entries {
+		name, ok := strings.CutPrefix(e.Name(), prefix)
+		if !ok {
+			continue
+		}
+		digits, ok := strings.CutSuffix(name, suffix)
+		if !ok {
+			continue
+		}
+		if n, err := strconv.ParseUint(digits, 10, 64); err == nil {
+			out = append(out, n)
+		}
+	}
+	return out, nil
+}
 
 // Submission is what a participant sends: it can only commit itself to pay.
 type Submission struct {

@@ -2,6 +2,7 @@ package clearing
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -96,5 +97,34 @@ func TestSubmissionsAreValidated(t *testing.T) {
 	}
 	if _, n := count(t, c); n != 0 {
 		t.Fatalf("%d invalid obligations recorded", n)
+	}
+}
+
+// A crash after Close archived a window but before it removed the journal
+// must not carry the closed window's obligations into the next one, where
+// they would settle a second time.
+func TestACrashDuringCloseNeverSettlesTwice(t *testing.T) {
+	dir := t.TempDir()
+	c := open(t, dir)
+	owe(t, c, "a", "b", "1", 100)
+	journal, err := os.ReadFile(c.journal())
+	if err != nil {
+		t.Fatal(err)
+	}
+	stale := c.journal()
+	if _, err := c.Close(time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	// Put the journal back as if the process died before removing it.
+	if err := os.WriteFile(stale, journal, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	c = open(t, dir)
+	if w, n := count(t, c); w != 2 || n != 0 {
+		t.Fatalf("window %d reopened with %d obligations from the closed window", w, n)
+	}
+	if _, err := os.Stat(stale); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("the stale journal should be removed, got %v", err)
 	}
 }
