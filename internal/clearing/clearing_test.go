@@ -128,3 +128,44 @@ func TestACrashDuringCloseNeverSettlesTwice(t *testing.T) {
 		t.Fatalf("the stale journal should be removed, got %v", err)
 	}
 }
+
+// A crash mid-append leaves a partial last line. That obligation was never
+// acknowledged (acknowledgement follows fsync of a whole line), so the store
+// drops it and starts, rather than refusing to start at all.
+func TestATornJournalLineIsDropped(t *testing.T) {
+	dir := t.TempDir()
+	c := open(t, dir)
+	owe(t, c, "a", "b", "1", 100)
+	f, err := os.OpenFile(c.journal(), os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.WriteString(`{"id":"a:2","debtor":"a","cred`); err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+
+	c = open(t, dir)
+	if _, n := count(t, c); n != 1 {
+		t.Fatalf("%d obligations after a torn write, want 1", n)
+	}
+	// The journal is usable again: the next append lands on its own line.
+	owe(t, c, "a", "b", "2", 5)
+	if _, n := count(t, open(t, dir)); n != 2 {
+		t.Fatalf("%d obligations, want 2", n)
+	}
+}
+
+func TestCorruptionInsideTheJournalIsStillAnError(t *testing.T) {
+	dir := t.TempDir()
+	c := open(t, dir)
+	owe(t, c, "a", "b", "1", 100)
+	path := c.journal()
+	good, _ := os.ReadFile(path)
+	if err := os.WriteFile(path, append([]byte("{not json}\n"), good...), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Open(dir, members); err == nil {
+		t.Fatal("a complete but unreadable line is corruption, not a torn write")
+	}
+}

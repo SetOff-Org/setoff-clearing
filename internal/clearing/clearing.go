@@ -5,7 +5,7 @@
 package clearing
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -76,24 +76,34 @@ func Open(dir string, members []string) (*Clearing, error) {
 			}
 		}
 	}
-	f, err := os.Open(c.journal())
+	data, err := os.ReadFile(c.journal())
 	if errors.Is(err, os.ErrNotExist) {
 		return c, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
+	// Bytes after the last newline are a write torn by a crash. Obligations
+	// are acknowledged only after their whole line is fsynced, so that one
+	// never was: drop it, so the next append starts on a fresh line.
+	complete := bytes.LastIndexByte(data, '\n') + 1
+	if complete < len(data) {
+		if err := os.Truncate(c.journal(), int64(complete)); err != nil {
+			return nil, err
+		}
+	}
+	for i, line := range bytes.Split(data[:complete], []byte{'\n'}) {
+		if len(line) == 0 {
+			continue
+		}
 		var o netting.Obligation
-		if err := json.Unmarshal(sc.Bytes(), &o); err != nil {
-			return nil, fmt.Errorf("journal: %w", err)
+		if err := json.Unmarshal(line, &o); err != nil {
+			return nil, fmt.Errorf("journal line %d: %w", i+1, err)
 		}
 		c.obligations = append(c.obligations, o)
 		c.ids[o.ID] = true
 	}
-	return c, sc.Err()
+	return c, nil
 }
 
 func (c *Clearing) journal() string { return c.journalFor(c.window) }
