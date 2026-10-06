@@ -117,6 +117,8 @@ func (s *Server) submit(w http.ResponseWriter, r *http.Request) {
 	}
 	id, window, err := s.Clearing.Submit(debtor, sub)
 	switch {
+	case errors.Is(err, clearing.ErrAlreadyRecorded):
+		reply(w, http.StatusOK, map[string]any{"id": id, "window": window, "replayed": true})
 	case errors.Is(err, clearing.ErrDuplicate):
 		reply(w, http.StatusConflict, errBody(err.Error()))
 	case errors.Is(err, clearing.ErrInvalid):

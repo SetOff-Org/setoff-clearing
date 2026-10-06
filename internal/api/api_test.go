@@ -103,7 +103,11 @@ func TestTheOpenWindowSurvivesRestarts(t *testing.T) {
 	if _, p := call(t, srv, "GET", "/v1/window", "op", nil); p["obligations"].(float64) != 1 {
 		t.Fatalf("journal not replayed: %v", p)
 	}
-	if code, _ := call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "r1", "100")); code != http.StatusConflict {
+	// References survive the restart: a retry replays, a clash conflicts.
+	if code, _ := call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "r1", "100")); code != http.StatusOK {
+		t.Fatalf("retry after restart: %d", code)
+	}
+	if code, _ := call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "r1", "99")); code != http.StatusConflict {
 		t.Fatalf("duplicate after restart: %d", code)
 	}
 }
@@ -282,5 +286,20 @@ func TestClosingNotifies(t *testing.T) {
 	}
 	if w := <-notified; w != 1 {
 		t.Fatalf("notified about window %d", w)
+	}
+}
+
+func TestRetriedObligationsReplay(t *testing.T) {
+	srv := server(t, t.TempDir())
+	code, first := call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "r1", "10"))
+	if code != http.StatusCreated {
+		t.Fatal(code, first)
+	}
+	code, again := call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "r1", "10"))
+	if code != http.StatusOK || again["id"] != first["id"] || again["replayed"] != true {
+		t.Fatalf("status %d: %v", code, again)
+	}
+	if code, _ := call(t, srv, "POST", "/v1/obligations", "key-a", owe("anchor-b", "r1", "11")); code != http.StatusConflict {
+		t.Fatalf("status %d", code)
 	}
 }

@@ -24,9 +24,12 @@ import (
 
 // Errors callers map to responses.
 var (
-	ErrInvalid       = errors.New("invalid obligation")
-	ErrDuplicate     = errors.New("duplicate reference")
-	ErrUnknownWindow = errors.New("unknown window")
+	ErrInvalid   = errors.New("invalid obligation")
+	ErrDuplicate = errors.New("duplicate reference")
+	// ErrAlreadyRecorded accompanies the original id when an identical
+	// obligation is submitted again, e.g. by a client retrying a timeout.
+	ErrAlreadyRecorded = errors.New("already recorded")
+	ErrUnknownWindow   = errors.New("unknown window")
 )
 
 // Closed is a settled window.
@@ -43,7 +46,7 @@ type Clearing struct {
 	dir         string
 	window      uint64
 	obligations []netting.Obligation
-	ids         map[string]bool
+	ids         map[string]int // obligation id -> index in obligations
 	members     map[string]bool
 	gross       map[string]*big.Int // per asset, for O(1) overflow checks
 	assets      map[string]bool     // nil: any asset
@@ -63,8 +66,8 @@ func (c *Clearing) RestrictAssets(assets []string) {
 
 // admit records an obligation already known to be valid.
 func (c *Clearing) admit(o netting.Obligation) {
+	c.ids[o.ID] = len(c.obligations)
 	c.obligations = append(c.obligations, o)
-	c.ids[o.ID] = true
 	if c.gross[o.Asset] == nil {
 		c.gross[o.Asset] = new(big.Int)
 	}
@@ -76,7 +79,7 @@ func Open(dir string, members []string) (*Clearing, error) {
 	if err := os.MkdirAll(filepath.Join(dir, "windows"), 0o750); err != nil {
 		return nil, err
 	}
-	c := &Clearing{dir: dir, ids: map[string]bool{}, members: map[string]bool{}, gross: map[string]*big.Int{}}
+	c := &Clearing{dir: dir, ids: map[string]int{}, members: map[string]bool{}, gross: map[string]*big.Int{}}
 	for _, m := range members {
 		c.members[m] = true
 	}
@@ -182,7 +185,11 @@ func (c *Clearing) Submit(debtor string, s Submission) (string, uint64, error) {
 		return "", 0, fmt.Errorf("%w: asset %q is not cleared here", ErrInvalid, s.Asset)
 	}
 	o := netting.Obligation{ID: debtor + ":" + s.Reference, Debtor: debtor, Creditor: s.Creditor, Asset: s.Asset, Amount: s.Amount}
-	if c.ids[o.ID] {
+	if i, used := c.ids[o.ID]; used {
+		prev := c.obligations[i]
+		if prev.Creditor == o.Creditor && prev.Asset == o.Asset && prev.Amount.Cmp(&o.Amount.Int) == 0 {
+			return o.ID, c.window, ErrAlreadyRecorded
+		}
 		return "", 0, ErrDuplicate
 	}
 	if err := netting.Validate(o); err != nil {
@@ -254,7 +261,7 @@ func (c *Clearing) Close(now time.Time) (*Closed, error) {
 		return nil, err
 	}
 	c.window++
-	c.obligations, c.ids, c.gross = nil, map[string]bool{}, map[string]*big.Int{}
+	c.obligations, c.ids, c.gross = nil, map[string]int{}, map[string]*big.Int{}
 	return closed, nil
 }
 

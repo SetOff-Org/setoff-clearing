@@ -264,3 +264,26 @@ func TestAutoCloseSkipsEmptyWindows(t *testing.T) {
 		t.Fatalf("open window is %d", w)
 	}
 }
+
+func TestAnIdenticalRetryIsNotADuplicate(t *testing.T) {
+	dir := t.TempDir()
+	c := open(t, dir)
+	s := Submission{Reference: "inv-7", Creditor: "b", Asset: "USDC", Amount: netting.NewAmount(42)}
+	id, _, err := c.Submit("a", s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, store := range []*Clearing{c, open(t, dir)} { // before and after a restart
+		again, w, err := store.Submit("a", s)
+		if !errors.Is(err, ErrAlreadyRecorded) || again != id || w != 1 {
+			t.Fatalf("retry: %q %d %v", again, w, err)
+		}
+		if _, n := count(t, store); n != 1 {
+			t.Fatalf("a retry recorded a second obligation: %d", n)
+		}
+	}
+	s.Amount = netting.NewAmount(43)
+	if _, _, err := c.Submit("a", s); !errors.Is(err, ErrDuplicate) {
+		t.Fatalf("a different obligation under a used reference must conflict, got %v", err)
+	}
+}
