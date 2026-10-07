@@ -43,6 +43,16 @@ The netting algorithm is an independent Go implementation of
 it to reproduce every Rust reference vector exactly, including a
 200-obligation window, and CI checks the vectors are current.
 
+## Install
+
+```sh
+go install github.com/SetOff-Org/setoff-clearing/cmd/setoff@latest
+docker run --rm ghcr.io/setoff-org/setoff version   # amd64 and arm64
+```
+
+Binaries for Linux, macOS and Windows are on
+[Releases](https://github.com/SetOff-Org/setoff-clearing/releases).
+
 ## Clearing service
 
 ```sh
