@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-07
+
 ### Added
 
 - `setoff net`: multilateral netting of CSV or JSON obligations, reproducing
@@ -40,4 +42,5 @@ All notable changes to this project are documented here. The format follows
   act as each other.
 - Each submission re-netted the whole window; validation is now constant time.
 
-[Unreleased]: https://github.com/SetOff-Org/setoff-clearing/commits/main
+[Unreleased]: https://github.com/SetOff-Org/setoff-clearing/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/SetOff-Org/setoff-clearing/releases/tag/v0.1.0
