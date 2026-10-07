@@ -60,7 +60,7 @@ func main() {
 	case "report":
 		err = runReport(os.Args[2:], os.Stdout)
 	case "version":
-		fmt.Println("setoff", version)
+		fmt.Println("setoff", buildVersion())
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 	default:
