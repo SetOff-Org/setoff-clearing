@@ -30,6 +30,8 @@ type Server struct {
 	// Addresses maps each account to its participant id.
 	SEP10     *sep10.Server
 	Addresses map[string]string
+	// Settlement, if set, collects authorizations and settles windows on chain.
+	Settlement *Settlement
 }
 
 // Handler returns the routes.
@@ -41,6 +43,10 @@ type Server struct {
 //	GET  /v1/windows           participant or operator: archived windows, newest first (?before=n&limit=50)
 //	GET  /v1/windows/{n}       participant or operator: an archived window
 //	GET  /v1/windows/{n}/camt053  ISO 20022 statements: the caller's own, or all for the operator
+//	POST /v1/windows/{n}/settlement      operator: simulate the window's submits, collect authorizations
+//	GET  /v1/windows/{n}/settlement      participant or operator: settlement progress
+//	GET  /v1/windows/{n}/authorizations  participant: own authorization entries to sign
+//	POST /v1/windows/{n}/authorizations  participant: signed entries; submits once a batch is complete
 //	GET  /auth                 SEP-10 challenge for ?account=G… (with sep10 configured)
 //	POST /auth                 {"transaction": signed challenge} -> {"token"}
 //	GET  /.well-known/stellar.toml
@@ -59,6 +65,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/windows/{n}", s.anyone(s.archived))
 	mux.HandleFunc("GET /v1/windows/{n}/camt053", s.anyone(s.camt053))
 	mux.Handle("GET /metrics", &s.Metrics)
+	s.settlementRoutes(mux)
 	if s.SEP10 != nil {
 		mux.HandleFunc("GET /auth", s.challenge)
 		mux.HandleFunc("POST /auth", s.token)

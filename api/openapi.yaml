@@ -229,6 +229,129 @@ paths:
             application/xml: {}
         "401": { $ref: "#/components/responses/Error" }
         "404": { $ref: "#/components/responses/Error" }
+  /v1/windows/{n}/settlement:
+    post:
+      summary: Prepare on-chain settlement of a closed window
+      description: |
+        Simulates each `submit` batch of the window's plan against the
+        settlement contract and records the Soroban authorization entries its
+        debtors must sign, valid for `validity_ledgers`. Preparing again
+        refreshes batches not yet submitted, with new nonces and expiry.
+      security:
+        - operator: []
+      parameters:
+        - { name: n, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: The settlement session.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settlement" }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "502": { $ref: "#/components/responses/Error" }
+    get:
+      summary: Settlement progress
+      security:
+        - participant: []
+        - operator: []
+      parameters:
+        - { name: n, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: The session, how many authorizations are still missing, and whether the window is settled.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session: { $ref: "#/components/schemas/Settlement" }
+                  pending: { type: integer }
+                  settled: { type: boolean }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /v1/windows/{n}/authorizations:
+    get:
+      summary: The caller's authorization entries to sign
+      description: |
+        Each entry authorizes one `submit` call on the debtor's behalf. Sign
+        `hash` with the account's Ed25519 key, or sign `entry` with a Stellar
+        SDK's `authorizeEntry` or tessera-coordinator's `/v1/authorize`.
+      security:
+        - participant: []
+      parameters:
+        - { name: n, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Entries for the caller, in batches not yet settled.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: integer }
+                  address: { type: string }
+                  authorizations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        batch: { type: integer }
+                        slot: { type: integer }
+                        entry: { type: string, description: Unsigned base64 SorobanAuthorizationEntry. }
+                        hash: { type: string, description: "SHA-256 of the entry's HashIdPreimage on this network, hex: what an Ed25519 key signs." }
+                        expiration_ledger: { type: integer }
+                        signed: { type: boolean }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+    post:
+      summary: Hand back signed authorization entries
+      description: |
+        Each item names its batch and slot and carries either the whole signed
+        entry or, for a G… account, the hex Ed25519 signature of its `hash`.
+        A signed entry must equal the issued one except for its signature, and
+        account signatures are verified before anything is recorded; one bad
+        item rejects the request. Once every entry of a batch is signed, the
+        service submits it, then calls `settle` after the last batch.
+      security:
+        - participant: []
+      parameters:
+        - { name: n, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [authorizations]
+              properties:
+                authorizations:
+                  type: array
+                  items:
+                    type: object
+                    required: [batch, slot]
+                    properties:
+                      batch: { type: integer }
+                      slot: { type: integer }
+                      entry: { type: string }
+                      signature: { type: string }
+      responses:
+        "202":
+          description: Recorded; submission, if due, runs in the background.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: integer }
+                  accepted: { type: integer }
+                  pending: { type: integer }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     participant:
@@ -287,6 +410,28 @@ components:
         closed_at: { type: string, format: date-time }
         obligations: { type: array, items: { $ref: "#/components/schemas/Obligation" } }
         netting: { $ref: "#/components/schemas/Netting" }
+    Tx:
+      type: object
+      properties:
+        hash: { type: string }
+        status: { type: string, enum: [SUCCESS, FAILED, REJECTED], description: "REJECTED: refused in simulation, never sent." }
+        ledger: { type: integer }
+        error: { type: string }
+    Settlement:
+      type: object
+      properties:
+        window: { type: integer }
+        contract: { type: string }
+        batches:
+          type: array
+          items:
+            type: object
+            properties:
+              obligations: { type: array, items: { type: object } }
+              auth: { type: array, items: { type: string } }
+              entries: { type: array, items: { type: object } }
+              tx: { $ref: "#/components/schemas/Tx" }
+        settle: { $ref: "#/components/schemas/Tx" }
     Error:
       type: object
       required: [error]
