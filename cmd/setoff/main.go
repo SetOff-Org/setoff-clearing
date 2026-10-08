@@ -14,16 +14,21 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"text/tabwriter"
 	"time"
+
+	"github.com/stellar/go-stellar-sdk/keypair"
 
 	"github.com/SetOff-Org/setoff-clearing/internal/api"
 	"github.com/SetOff-Org/setoff-clearing/internal/clearing"
 	"github.com/SetOff-Org/setoff-clearing/internal/config"
 	"github.com/SetOff-Org/setoff-clearing/internal/netting"
 	"github.com/SetOff-Org/setoff-clearing/internal/sep10"
+	"github.com/SetOff-Org/setoff-clearing/internal/settle"
+	"github.com/SetOff-Org/setoff-clearing/internal/soroban"
 	"github.com/SetOff-Org/setoff-clearing/internal/webhook"
 )
 
@@ -36,12 +41,18 @@ Usage:
   setoff serve [--config setoff.toml]
   setoff soroban [--config setoff.toml] --window N [--network testnet] [--source operator] [--json]
   setoff report [--config setoff.toml] --window N [--participant ID]   ISO 20022 camt.053
+  setoff authorize --window N --key-env VAR --secret-env VAR [--url URL]
   setoff version
 
 CSV input needs the header: id,debtor,creditor,asset,amount
 
 soroban prints the Stellar CLI calls that settle a closed window through the
 SetOff settlement contract. Each submit must be authorized by its debtors.
+
+With [settlement] configured, serve does this itself: debtors fetch and sign
+their authorization entries over the API, and the service submits each batch
+and settles. authorize is that step for a participant holding a plain
+account key.
 `
 
 func main() {
@@ -59,6 +70,8 @@ func main() {
 		err = runSoroban(os.Args[2:], os.Stdout)
 	case "report":
 		err = runReport(os.Args[2:], os.Stdout)
+	case "authorize":
+		err = runAuthorize(os.Args[2:], os.Stdout)
 	case "version":
 		fmt.Println("setoff", buildVersion())
 	case "-h", "--help", "help":
@@ -200,6 +213,12 @@ func runServe(args []string) error {
 	if err != nil {
 		return err
 	}
+	if s.Settlement, err = settlement(ctx, cfg, logger); err != nil {
+		return err
+	}
+	if s.Settlement != nil && cfg.Settlement.PrepareOnClose {
+		notify = prepareOnClose(ctx, s.Settlement, logger, notify)
+	}
 	s.OnClose = notify
 	if every := cfg.CloseEvery.Duration; every > 0 {
 		go store.AutoClose(ctx, every, func(w *clearing.Closed, err error) {
@@ -216,6 +235,44 @@ func runServe(args []string) error {
 		return err
 	}
 	return nil
+}
+
+// settlement builds on-chain settlement from [settlement], if configured.
+func settlement(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*api.Settlement, error) {
+	st := cfg.Settlement
+	if st.RPC == "" {
+		return nil, nil
+	}
+	operator, err := keypair.ParseFull(os.Getenv(st.OperatorSecretEnv))
+	if err != nil {
+		return nil, fmt.Errorf("settlement: $%s must hold the operator's S… secret key", st.OperatorSecretEnv)
+	}
+	logger.Info("on-chain settlement enabled", "contract", cfg.Contract, "operator", operator.Address(), "rpc", st.RPC)
+	return &api.Settlement{
+		Settler: &settle.Settler{
+			RPC: settle.NewClient(st.RPC), Passphrase: sep10.Passphrase(st.Network), Contract: cfg.Contract,
+			Operator: operator, Dir: filepath.Join(cfg.DataDir, "settlement"), Validity: st.ValidityLedgers,
+		},
+		Mapping:    soroban.Mapping{Addresses: cfg.Addresses(), Tokens: cfg.Tokens, PositionQuota: st.PositionQuota},
+		Background: ctx,
+	}, nil
+}
+
+// prepareOnClose wraps the close hook to prepare settlement of every closed window.
+func prepareOnClose(ctx context.Context, st *api.Settlement, logger *slog.Logger, next func(*clearing.Closed)) func(*clearing.Closed) {
+	return func(w *clearing.Closed) {
+		next(w)
+		go func() {
+			sess, err := st.Settler.Prepare(ctx, w, st.Mapping)
+			switch {
+			case errors.Is(err, soroban.ErrNothingToSettle):
+			case err != nil:
+				logger.Error("prepare settlement", "window", w.Window, "err", err)
+			default:
+				logger.Info("settlement prepared", "window", w.Window, "batches", len(sess.Batches), "authorizations", sess.Pending())
+			}
+		}()
+	}
 }
 
 // notifier returns the close hook: a signed webhook delivery when configured,

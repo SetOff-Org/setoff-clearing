@@ -45,9 +45,25 @@ type Config struct {
 		URL       string `toml:"url"`
 		SecretEnv string `toml:"secret_env"`
 	} `toml:"webhook"`
+	// Settlement, if set, collects debtors' authorizations over the API and
+	// submits each closed window to the contract.
+	Settlement Settlement `toml:"settlement"`
 	// Tokens maps each asset to its SEP-41 token contract on chain.
 	Tokens       map[string]string `toml:"tokens"`
 	Participants []Participant     `toml:"participant"`
+}
+
+// Settlement is the [settlement] table.
+type Settlement struct {
+	RPC               string `toml:"rpc"`
+	Network           string `toml:"network"`             // testnet, public, or a passphrase
+	OperatorSecretEnv string `toml:"operator_secret_env"` // S… key of the account that submits
+	// ValidityLedgers is how long debtors have to sign, in ledgers (about 5 s).
+	ValidityLedgers uint32 `toml:"validity_ledgers"`
+	// PrepareOnClose prepares settlement as soon as a window closes.
+	PrepareOnClose bool `toml:"prepare_on_close"`
+	// PositionQuota is the contract's position_quota; 0 means its default.
+	PositionQuota int `toml:"position_quota"`
 }
 
 // Addresses maps participant ids to their Stellar addresses, where set.
@@ -92,6 +108,18 @@ func Load(path string) (*Config, error) {
 	}
 	if d := c.CloseEvery.Duration; d != 0 && d < time.Minute {
 		return nil, fmt.Errorf("%s: close_every must be at least 1m", path)
+	}
+	if st := c.Settlement; st.RPC != "" {
+		switch {
+		case len(c.Contract) != 56 || c.Contract[0] != 'C':
+			return nil, fmt.Errorf("%s: [settlement] needs contract, the settlement contract's C… address", path)
+		case st.Network == "":
+			return nil, fmt.Errorf("%s: [settlement] needs network", path)
+		case st.OperatorSecretEnv == "":
+			return nil, fmt.Errorf("%s: [settlement] needs operator_secret_env", path)
+		case len(c.Tokens) == 0:
+			return nil, fmt.Errorf("%s: [settlement] needs [tokens]", path)
+		}
 	}
 	if !filepath.IsAbs(c.DataDir) {
 		c.DataDir = filepath.Join(filepath.Dir(path), c.DataDir)

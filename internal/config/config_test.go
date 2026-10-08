@@ -103,3 +103,29 @@ func TestKeysMustBeUnambiguous(t *testing.T) {
 		t.Fatalf("a participant listed twice: %v", err)
 	}
 }
+
+func TestSettlement(t *testing.T) {
+	const contract = "contract = \"CCW6QCOSJTTJHDXJOVQ36NVIBAHBUVPMSZNOIJ3A444O6YMVHR4ZEYQV\"\n"
+	const tokens = "[tokens]\nXLM = \"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC\"\n"
+	settlement := func(lines string) string {
+		return "[settlement]\nrpc = \"https://rpc.example.org\"\n" + lines
+	}
+	full := settlement("network = \"testnet\"\noperator_secret_env = \"OP_SECRET\"\nvalidity_ledgers = 120\nprepare_on_close = true\n")
+	c, err := Load(write(t, contract+valid+tokens+full))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st := c.Settlement; st.ValidityLedgers != 120 || !st.PrepareOnClose || st.OperatorSecretEnv != "OP_SECRET" {
+		t.Fatalf("%+v", st)
+	}
+	for name, body := range map[string]string{
+		"no contract": valid + tokens + full,
+		"no tokens":   contract + valid + full,
+		"no network":  contract + valid + tokens + settlement("operator_secret_env = \"OP_SECRET\"\n"),
+		"no secret":   contract + valid + tokens + settlement("network = \"testnet\"\n"),
+	} {
+		if _, err := Load(write(t, body)); err == nil || !strings.Contains(err.Error(), "settlement") {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+}

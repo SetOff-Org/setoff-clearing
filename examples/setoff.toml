@@ -47,6 +47,16 @@ EURC = 7
 
 # Told about every closed window with a signed POST (optional). Receivers
 # verify X-SetOff-Signature: sha256=HMAC(secret, "<X-SetOff-Timestamp>.<body>").
+# Settle closed windows on chain from the service (optional): it collects each
+# debtor's authorization over the API, submits the batches and calls settle.
+# The operator account must be the contract's admin.
+[settlement]
+rpc = "https://soroban-testnet.stellar.org"
+network = "testnet"
+operator_secret_env = "SETOFF_OPERATOR_SECRET"
+prepare_on_close = true
+# validity_ledgers = 720   # how long debtors have to sign, about an hour
+
 [webhook]
 url = "https://treasury.example.org/setoff"
 secret_env = "SETOFF_WEBHOOK_SECRET"
