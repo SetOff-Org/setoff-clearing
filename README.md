@@ -37,6 +37,9 @@ transfers. This repository holds:
 - **`setoff report`**: ISO 20022 camt.053 statements for a closed window.
 - **`setoff soroban`**: the calls that settle a closed window through the
   [settlement contract](https://github.com/SetOff-Org/setoff-contracts).
+  With `[settlement]` configured, `setoff serve` does it itself.
+- **`setoff authorize`**: a debtor's side of that, signing its authorizations
+  with its own account key.
 
 The netting algorithm is an independent Go implementation of
 [setoff-engine](https://github.com/SetOff-Org/setoff-engine). The tests require
@@ -112,9 +115,44 @@ stellar contract invoke --id CCW6QC…EYQV --source operator --network testnet -
 
 Each leg's reference is derived from the window and leg number, so a batch
 resubmitted after a timeout is rejected by the contract rather than booked
-twice. Every submit must be authorized by its debtors; a debtor that is a
-[Tessera](https://github.com/Use-Tessera) threshold account signs through its
-coordinator's `/v1/authorize`.
+twice.
+
+### Letting the service settle
+
+Every submit must be authorized by its debtors, so the service collects their
+authorizations over the API and submits the batches itself. Add:
+
+```toml
+[settlement]
+rpc = "https://soroban-testnet.stellar.org"
+network = "testnet"
+operator_secret_env = "SETOFF_OPERATOR_SECRET"  # the contract's admin
+prepare_on_close = true                         # or POST /v1/windows/{n}/settlement
+```
+
+1. When a window closes, the service simulates each `submit` batch and records
+   the Soroban authorization entries the contract asks of each debtor, valid for
+   `validity_ledgers` (default 720, about an hour).
+2. Each debtor fetches its own from `GET /v1/windows/{n}/authorizations` and
+   posts them back signed: the whole entry, as Stellar SDKs' `authorizeEntry`
+   return it, or for an account just the Ed25519 signature of its `hash`.
+   `setoff authorize` does this with a key from the environment. A debtor that is
+   a [Tessera](https://github.com/Use-Tessera) threshold account signs the entry
+   through its coordinator's `/v1/authorize`.
+3. The service accepts a signed entry only if it is the issued one plus a valid
+   signature, byte for byte. Once a batch is fully signed it simulates, submits
+   and waits for it, then calls `settle` after the last one.
+   `GET /v1/windows/{n}/settlement` shows progress; failures are recorded there
+   and retried on the next signature or re-prepare.
+
+Sessions are kept in `data_dir/settlement/`, so a restart resumes where it left
+off. [`scripts/testnet-settle.sh`](scripts/testnet-settle.sh) runs the whole
+flow on testnet against a freshly deployed contract:
+
+| What | Transaction |
+|---|---|
+| Two debtors' authorizations, one `submit` of the netted plan | [`79b3d9d6…e9d4`](https://stellar.expert/explorer/testnet/tx/79b3d9d6058339d3b82f9c0908a52dfdb3a9ecbbe6c23e163c0bb6431eb2e9d4) |
+| `settle` | [`33409ebd…2c83`](https://stellar.expert/explorer/testnet/tx/33409ebdbb2e48f9b632c01476f18930a13dff1c864f032efc95d7dad4c92c83) |
 
 ## Treasury reports
 
@@ -129,8 +167,8 @@ in the statement.
 
 ## Roadmap
 
-1. Submitting settlement batches directly, collecting debtors' authorization
-   entries over the API.
+1. Collecting authorizations from contract-account debtors with custom
+   `__check_auth`, which today are checked only at simulation.
 
 ## License
 

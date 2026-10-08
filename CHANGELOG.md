@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- On-chain settlement from the service: with `[settlement]`, closed windows
+  are simulated against the settlement contract, debtors fetch and return
+  their Soroban authorization entries over
+  `/v1/windows/{n}/authorizations`, and the service submits each batch and
+  settles. Signed entries are checked byte for byte against the issued ones
+  and account signatures are verified before they are recorded.
+- `setoff authorize`: a debtor signs its authorizations with its own key.
+- `scripts/testnet-settle.sh`: the whole flow against a fresh testnet contract.
+
 ## [0.1.0] - 2026-10-07
 
 ### Added
