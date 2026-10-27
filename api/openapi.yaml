@@ -303,6 +303,7 @@ paths:
                         hash: { type: string, description: "SHA-256 of the entry's HashIdPreimage on this network, hex: what an Ed25519 key signs." }
                         expiration_ledger: { type: integer }
                         signed: { type: boolean }
+                        error: { type: string, description: "Set when a contract account's earlier signature was cleared: why the network refused it. Sign again." }
         "401": { $ref: "#/components/responses/Error" }
         "404": { $ref: "#/components/responses/Error" }
         "409": { $ref: "#/components/responses/Error" }
@@ -313,7 +314,12 @@ paths:
         entry or, for a G… account, the hex Ed25519 signature of its `hash`.
         A signed entry must equal the issued one except for its signature, and
         account signatures are verified before anything is recorded; one bad
-        item rejects the request. Once every entry of a batch is signed, the
+        item rejects the request. A contract account (C…) checks its own
+        signature, so when a request completes a batch that has one, the batch
+        is simulated in enforcing mode first: a contract account's signature
+        the network refuses is rejected here (422) if this request brought it,
+        and otherwise cleared with the reason in `GET`'s `error`, keeping the
+        accounts' valid signatures. Once every entry of a batch is signed, the
         service submits it, then calls `settle` after the last batch.
       security:
         - participant: []

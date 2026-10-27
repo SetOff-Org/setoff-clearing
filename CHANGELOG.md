@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Contract-account debtors (smart wallets with their own `__check_auth`) are
+  checked when they sign, not at submission: once their batch is fully
+  signed, it is simulated in enforcing mode before anything is recorded. A
+  refused signature is rejected with the network's reason (422) if the
+  request brought it, or cleared with the reason in `GET …/authorizations`'s
+  new `error` field, keeping the accounts' valid signatures.
+
 - On-chain settlement from the service: with `[settlement]`, closed windows
   are simulated against the settlement contract, debtors fetch and return
   their Soroban authorization entries over

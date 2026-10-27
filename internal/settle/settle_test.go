@@ -10,6 +10,7 @@ import (
 
 	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stellar/go-stellar-sdk/network"
+	"github.com/stellar/go-stellar-sdk/strkey"
 	"github.com/stellar/go-stellar-sdk/xdr"
 
 	"github.com/SetOff-Org/setoff-clearing/internal/clearing"
@@ -86,7 +87,7 @@ func TestSettlesAClosedWindow(t *testing.T) {
 	}
 
 	// Nothing is sent until every debtor has signed.
-	if _, err := s.Accept(7, parties[0].kp.Address(), sign(t, sess, parties[0])); err != nil {
+	if _, err := s.Accept(context.Background(), 7, parties[0].kp.Address(), sign(t, sess, parties[0])); err != nil {
 		t.Fatal(err)
 	}
 	if sess, err = s.Advance(ctx, 7); err != nil || len(c.Sent()) != 0 || sess.Pending() != 1 {
@@ -100,7 +101,7 @@ func TestSettlesAClosedWindow(t *testing.T) {
 	hash, _ := hex.DecodeString(e.Hash)
 	sig, _ := parties[1].kp.Sign(hash)
 	signed, _ := xdr.MarshalBase64(settle.WithSignature(entry, parties[1].kp.Address(), sig))
-	if _, err := s.Accept(7, parties[1].kp.Address(), []settle.Signature{{Batch: 0, Slot: e.Slot, Entry: signed}}); err != nil {
+	if _, err := s.Accept(context.Background(), 7, parties[1].kp.Address(), []settle.Signature{{Batch: 0, Slot: e.Slot, Entry: signed}}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -152,18 +153,18 @@ func TestRefusesBadAuthorizations(t *testing.T) {
 		if name == "wrong key" {
 			tc.sig.Slot = e.Slot // b's signature, offered for a's slot
 		}
-		if _, err := s.Accept(7, tc.who, []settle.Signature{tc.sig}); !errors.Is(err, settle.ErrInvalid) {
+		if _, err := s.Accept(context.Background(), 7, tc.who, []settle.Signature{tc.sig}); !errors.Is(err, settle.ErrInvalid) {
 			t.Errorf("%s: want settle.ErrInvalid, got %v", name, err)
 		}
 	}
 	// One bad signature in a set rejects the whole set.
-	if _, err := s.Accept(7, a.kp.Address(), []settle.Signature{mine, {Batch: 0, Slot: e.Slot, Signature: "abcd"}}); !errors.Is(err, settle.ErrInvalid) {
+	if _, err := s.Accept(context.Background(), 7, a.kp.Address(), []settle.Signature{mine, {Batch: 0, Slot: e.Slot, Signature: "abcd"}}); !errors.Is(err, settle.ErrInvalid) {
 		t.Fatal(err)
 	}
 	if got, _ := s.Session(7); got.Pending() != 2 {
 		t.Fatalf("a rejected set was partly recorded: %d pending", got.Pending())
 	}
-	if _, err := s.Accept(8, a.kp.Address(), []settle.Signature{mine}); !errors.Is(err, settle.ErrNotPrepared) {
+	if _, err := s.Accept(context.Background(), 8, a.kp.Address(), []settle.Signature{mine}); !errors.Is(err, settle.ErrNotPrepared) {
 		t.Fatal(err)
 	}
 }
@@ -173,7 +174,7 @@ func TestRecordsARejectedSubmitAndRetries(t *testing.T) {
 	ctx := context.Background()
 	sess, _ := s.Prepare(ctx, w, m)
 	for _, p := range parties[:2] {
-		if _, err := s.Accept(7, p.kp.Address(), sign(t, sess, p)); err != nil {
+		if _, err := s.Accept(context.Background(), 7, p.kp.Address(), sign(t, sess, p)); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -194,5 +195,121 @@ func TestRecordsARejectedSubmitAndRetries(t *testing.T) {
 	again, err := s.Prepare(ctx, w, m)
 	if err != nil || again.Batches[0].Tx == nil || again.Batches[0].Tx.Status != "SUCCESS" {
 		t.Fatalf("re-prepare dropped the settled batch: %v", err)
+	}
+}
+
+// contractDebtor makes debtor a a contract account (a smart wallet, C…)
+// that checks signatures with key, and returns its address.
+func contractDebtor(t *testing.T, c *settletest.Chain, m soroban.Mapping, key *keypair.Full) string {
+	t.Helper()
+	raw := make([]byte, 32)
+	copy(raw, key.Address()) // any 32 bytes make a contract id
+	address, err := strkey.Encode(strkey.VersionByteContract, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Addresses["a"] = address
+	c.ContractAccount(address, key)
+	return address
+}
+
+// contractSigned is the contract account's entry, signed by key the way its
+// __check_auth expects: the payload hash's signature as bytes.
+func contractSigned(t *testing.T, e *settle.Entry, key *keypair.Full) string {
+	t.Helper()
+	var entry xdr.SorobanAuthorizationEntry
+	if err := xdr.SafeUnmarshalBase64(e.Entry, &entry); err != nil {
+		t.Fatal(err)
+	}
+	hash, _ := hex.DecodeString(e.Hash)
+	sig, err := key.Sign(hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := xdr.ScBytes(sig)
+	creds := *entry.Credentials.Address
+	creds.Signature = xdr.ScVal{Type: xdr.ScValTypeScvBytes, Bytes: &b}
+	entry.Credentials.Address = &creds
+	out, _ := xdr.MarshalBase64(entry)
+	return out
+}
+
+func entryOf(sess *settle.Session, address string) *settle.Entry {
+	for _, e := range sess.Batches[0].Entries {
+		if e.Address == address {
+			return e
+		}
+	}
+	return nil
+}
+
+func TestRefusesABadContractAccountSignatureWhenItIsPosted(t *testing.T) {
+	s, c, w, m, parties := setup(t)
+	ctx := context.Background()
+	key := keypair.MustRandom()
+	wallet := contractDebtor(t, c, m, key)
+	sess, err := s.Prepare(ctx, w, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// b, an account, signs first; its signature is checked locally.
+	if _, err := s.Accept(ctx, 7, parties[1].kp.Address(), sign(t, sess, parties[1])); err != nil {
+		t.Fatal(err)
+	}
+	// The wallet's entry completes the batch, so the batch is simulated with
+	// every signature in place before anything is recorded. A signature by
+	// the wrong key is refused now, not when the batch is submitted.
+	e := entryOf(sess, wallet)
+	bad := settle.Signature{Batch: 0, Slot: e.Slot, Entry: contractSigned(t, e, keypair.MustRandom())}
+	_, err = s.Accept(ctx, 7, wallet, []settle.Signature{bad})
+	if !errors.Is(err, settle.ErrInvalid) || !strings.Contains(err.Error(), "__check_auth rejected") {
+		t.Fatalf("want the network's refusal, got %v", err)
+	}
+	if got, _ := s.Session(7); got.Pending() != 1 || len(c.Sent()) != 0 {
+		t.Fatalf("a refused signature was recorded or sent: %d pending, sent %v", got.Pending(), c.Sent())
+	}
+
+	// The right key is accepted, and the window settles.
+	good := settle.Signature{Batch: 0, Slot: e.Slot, Entry: contractSigned(t, e, key)}
+	if _, err := s.Accept(ctx, 7, wallet, []settle.Signature{good}); err != nil {
+		t.Fatal(err)
+	}
+	if sess, err = s.Advance(ctx, 7); err != nil || !sess.Settled() {
+		t.Fatalf("did not settle: %v", err)
+	}
+}
+
+func TestABadContractSignatureFoundLaterIsClearedNotTheAccounts(t *testing.T) {
+	s, c, w, m, parties := setup(t)
+	ctx := context.Background()
+	wallet := contractDebtor(t, c, m, keypair.MustRandom())
+	sess, err := s.Prepare(ctx, w, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The wallet signs first, with the wrong key. Nothing can check it yet:
+	// enforcing simulation needs b's signature too.
+	e := entryOf(sess, wallet)
+	bad := settle.Signature{Batch: 0, Slot: e.Slot, Entry: contractSigned(t, e, keypair.MustRandom())}
+	if _, err := s.Accept(ctx, 7, wallet, []settle.Signature{bad}); err != nil {
+		t.Fatal(err)
+	}
+	if c.Enforced() != 0 {
+		t.Fatal("simulated an incomplete batch")
+	}
+	// b's signature completes the batch. It is valid, so it is kept; the
+	// wallet's entry is cleared with the network's reason, for it to re-sign.
+	if _, err := s.Accept(ctx, 7, parties[1].kp.Address(), sign(t, sess, parties[1])); err != nil {
+		t.Fatalf("an account's valid signature was refused for someone else's: %v", err)
+	}
+	got, _ := s.Session(7)
+	if got.Pending() != 1 || entryOf(got, wallet).Signed != "" || !strings.Contains(entryOf(got, wallet).Error, "__check_auth rejected") {
+		t.Fatalf("want the wallet's entry cleared with a reason, got %+v", entryOf(got, wallet))
+	}
+	if entryOf(got, parties[1].kp.Address()).Signed == "" {
+		t.Fatal("b's signature was dropped")
+	}
+	if _, err := s.Advance(ctx, 7); err != nil || len(c.Sent()) != 0 {
+		t.Fatalf("submitted with a signature missing: %v %v", err, c.Sent())
 	}
 }
