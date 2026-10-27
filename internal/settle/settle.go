@@ -51,6 +51,9 @@ var (
 	ErrNotPrepared = errors.New("settlement has not been prepared for this window")
 	// ErrInvalid wraps every reason a signed authorization is refused.
 	ErrInvalid = errors.New("invalid authorization")
+	// errSimulation marks the network refusing a simulated call, as opposed
+	// to the RPC server being unreachable.
+	errSimulation = errors.New("simulation failed")
 )
 
 // Settler prepares and drives settlement sessions.
@@ -94,6 +97,9 @@ type Entry struct {
 	Hash             string `json:"hash"`
 	ExpirationLedger uint32 `json:"expiration_ledger"`
 	Signed           string `json:"signed,omitempty"`
+	// Error says why a contract account's signature was cleared: the network
+	// refused it when its batch was simulated with every signature in place.
+	Error string `json:"error,omitempty"`
 }
 
 // Tx is a transaction's fate.
@@ -217,7 +223,16 @@ func (s *Settler) Session(n uint64) (*Session, error) {
 
 // Accept records signed authorizations from the debtor at address. Either
 // all are accepted or none are.
-func (s *Settler) Accept(n uint64, address string, sigs []Signature) (*Session, error) {
+//
+// An account's signature is checked here. A contract account checks its own
+// (its __check_auth), so the only way to check one is to simulate its batch
+// in enforcing mode, which needs every entry of the batch signed. When a
+// submission completes a batch that has contract-account debtors, Accept
+// simulates it first: if the submission brought a contract account's entry
+// and the network refuses the batch, the submission is refused; if it brought
+// only account signatures (already checked), they are kept and the contract
+// accounts' entries are cleared with the reason, so only they sign again.
+func (s *Settler) Accept(ctx context.Context, n uint64, address string, sigs []Signature) (*Session, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	sess, err := s.load(n)
@@ -225,6 +240,7 @@ func (s *Settler) Accept(n uint64, address string, sigs []Signature) (*Session, 
 		return nil, err
 	}
 	signed := map[*Entry]string{}
+	batches := map[int]bool{}
 	for i, sig := range sigs {
 		e, entry, err := s.check(sess, address, sig)
 		if err != nil {
@@ -233,11 +249,76 @@ func (s *Settler) Accept(n uint64, address string, sigs []Signature) (*Session, 
 		if signed[e], err = xdr.MarshalBase64(entry); err != nil {
 			return nil, err
 		}
+		batches[sig.Batch] = true
+	}
+	cleared := map[*Entry]string{}
+	for i := range batches {
+		auth, contracts := assemble(sess.Batches[i], signed)
+		if auth == nil || len(contracts) == 0 {
+			continue // incomplete, or nothing a local check missed
+		}
+		err := s.enforce(ctx, sess.Batches[i], auth)
+		switch {
+		case err == nil:
+			continue
+		case !errors.Is(err, errSimulation):
+			return nil, err // RPC unreachable: record nothing, the debtor retries
+		}
+		for _, e := range contracts {
+			if _, mine := signed[e]; mine {
+				return nil, fmt.Errorf("%w: batch %d: the network refused the batch with your authorization: %w", ErrInvalid, i, err)
+			}
+		}
+		for _, e := range contracts {
+			cleared[e] = fmt.Sprintf("refused when batch %d was simulated with every signature in place (%v); sign again", i, err)
+		}
 	}
 	for e, v := range signed {
-		e.Signed = v
+		e.Signed, e.Error = v, ""
+	}
+	for e, why := range cleared {
+		e.Signed, e.Error = "", why
 	}
 	return sess, s.save(sess)
+}
+
+// assemble returns batch b's authorizations with every signature in place,
+// counting the ones in signed, and its contract-account entries; auth is nil
+// while any debtor has yet to sign.
+func assemble(b *Batch, signed map[*Entry]string) (auth []string, contracts []*Entry) {
+	if b.Tx != nil && b.Tx.Status == "SUCCESS" {
+		return nil, nil
+	}
+	auth = append([]string(nil), b.Auth...)
+	for _, e := range b.Entries {
+		v, ok := signed[e]
+		if !ok {
+			v = e.Signed
+		}
+		if v == "" {
+			return nil, nil
+		}
+		auth[e.Slot] = v
+		if !strkey.IsValidEd25519PublicKey(e.Address) {
+			contracts = append(contracts, e)
+		}
+	}
+	return auth, contracts
+}
+
+// enforce simulates batch b's submit with auth attached, which the network
+// checks in enforcing mode, contract accounts' __check_auth included.
+func (s *Settler) enforce(ctx context.Context, b *Batch, auth []string) error {
+	entries, err := decodeAuth(auth)
+	if err != nil {
+		return err
+	}
+	arg, err := obligationsVal(b.Obligations)
+	if err != nil {
+		return err
+	}
+	_, _, err = s.simulate(ctx, "submit", []xdr.ScVal{arg}, entries)
+	return err
 }
 
 // check validates one signature against the session, returning the slot it
@@ -305,8 +386,8 @@ func (s *Settler) check(sess *Session, address string, sig Signature) (*Entry, x
 			return nil, none, err
 		}
 	}
-	// Contract accounts check their own signatures; simulation before
-	// submission enforces them.
+	// Contract accounts check their own signatures: Accept simulates the
+	// batch once every entry is signed.
 	return want, entry, nil
 }
 
@@ -416,7 +497,7 @@ func (s *Settler) simulate(ctx context.Context, fn string, args []xdr.ScVal, aut
 		return nil, nil, err
 	}
 	if sim.Error != "" {
-		return nil, nil, fmt.Errorf("simulation failed: %s", sim.Error)
+		return nil, nil, fmt.Errorf("%w: %s", errSimulation, sim.Error)
 	}
 	return sim, tx, nil
 }

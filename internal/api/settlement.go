@@ -30,6 +30,8 @@ type authorization struct {
 	Hash             string `json:"hash"`
 	ExpirationLedger uint32 `json:"expiration_ledger"`
 	Signed           bool   `json:"signed"`
+	// Error is why a contract account's earlier signature was cleared.
+	Error string `json:"error,omitempty"`
 }
 
 func (s *Server) settlementRoutes(mux *http.ServeMux) {
@@ -91,7 +93,7 @@ func (s *Server) authorizations(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, e := range b.Entries {
 			if e.Address == address {
-				out = append(out, authorization{Batch: i, Slot: e.Slot, Entry: e.Entry, Hash: e.Hash, ExpirationLedger: e.ExpirationLedger, Signed: e.Signed != ""})
+				out = append(out, authorization{Batch: i, Slot: e.Slot, Entry: e.Entry, Hash: e.Hash, ExpirationLedger: e.ExpirationLedger, Signed: e.Signed != "", Error: e.Error})
 			}
 		}
 	}
@@ -119,7 +121,7 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) {
 		reply(w, http.StatusBadRequest, errBody(`body must be {"authorizations": [{"batch", "slot", "entry" or "signature"}]}`))
 		return
 	}
-	sess, err := s.Settlement.Settler.Accept(n, address, req.Authorizations)
+	sess, err := s.Settlement.Settler.Accept(r.Context(), n, address, req.Authorizations)
 	switch {
 	case errors.Is(err, settle.ErrNotPrepared):
 		reply(w, http.StatusNotFound, errBody(err.Error()))
@@ -132,7 +134,7 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) {
 		reply(w, http.StatusInternalServerError, errBody("could not record authorizations"))
 		return
 	}
-	go s.advance(n)
+	go s.advance(n) //nolint:gosec // G118: submission must outlive this request; it runs on the server's context
 	reply(w, http.StatusAccepted, map[string]any{"window": n, "accepted": len(req.Authorizations), "pending": sess.Pending()})
 }
 

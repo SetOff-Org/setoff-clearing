@@ -8,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stellar/go-stellar-sdk/xdr"
 
 	"github.com/SetOff-Org/setoff-clearing/internal/settle"
@@ -26,6 +27,27 @@ type Chain struct {
 	sent       []string // function names, in order
 	nonce      int64
 	reject     string // simulate this function as failing
+	contracts  map[string]*keypair.Full
+	simulated  int // enforcing simulations of submit
+}
+
+// ContractAccount registers a contract account (a smart wallet, C…) whose
+// __check_auth accepts a 64-byte Ed25519 signature by key of the entry's
+// payload hash, given as the credentials' signature (ScVal bytes).
+func (c *Chain) ContractAccount(address string, key *keypair.Full) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.contracts == nil {
+		c.contracts = map[string]*keypair.Full{}
+	}
+	c.contracts[address] = key
+}
+
+// Enforced counts the simulations of submit run with signatures attached.
+func (c *Chain) Enforced() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.simulated
 }
 
 // Ledger is the chain's latest ledger.
@@ -108,11 +130,16 @@ func (c *Chain) simulate(env string) map[string]any {
 		return ok
 	}
 	if len(op.Auth) > 0 {
+		c.simulated++
 		for _, e := range op.Auth {
 			a := e.Credentials.Address
 			addr, _ := a.Address.String()
 			hash, _ := settle.PreimageHash(c.passphrase, e)
-			if err := settle.Verify(a.Signature, addr, hash[:]); err != nil {
+			if key, ok := c.contracts[addr]; ok {
+				if sig, isBytes := a.Signature.GetBytes(); !isBytes || key.Verify(hash[:], sig) != nil {
+					return map[string]any{"error": "HostError: Error(Auth, InvalidAction): " + addr + "'s __check_auth rejected the signature"}
+				}
+			} else if err := settle.Verify(a.Signature, addr, hash[:]); err != nil {
 				return map[string]any{"error": "HostError: Error(Auth, InvalidAction): " + err.Error()}
 			}
 			if uint32(a.SignatureExpirationLedger) <= Ledger {

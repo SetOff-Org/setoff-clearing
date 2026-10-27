@@ -140,8 +140,12 @@ prepare_on_close = true                         # or POST /v1/windows/{n}/settle
    a [Tessera](https://github.com/Use-Tessera) threshold account signs the entry
    through its coordinator's `/v1/authorize`.
 3. The service accepts a signed entry only if it is the issued one plus a valid
-   signature, byte for byte. Once a batch is fully signed it simulates, submits
-   and waits for it, then calls `settle` after the last one.
+   signature, byte for byte. A debtor that is a contract account (a smart
+   wallet with its own `__check_auth`) is checked by the network itself: when
+   its batch becomes fully signed, the service simulates it in enforcing mode
+   before recording anything, so a bad signature is refused at
+   `POST …/authorizations`, not at submission. Once a batch is fully signed it
+   is submitted and waited for, then `settle` is called after the last one.
    `GET /v1/windows/{n}/settlement` shows progress; failures are recorded there
    and retried on the next signature or re-prepare.
 
@@ -164,11 +168,6 @@ One statement per participant and asset: each obligation is a booked entry and
 the net position is the closing balance. `[decimals]` turns smallest units into
 whole units; assets without an ISO 4217 code are reported under `XXX` and named
 in the statement.
-
-## Roadmap
-
-1. Collecting authorizations from contract-account debtors with custom
-   `__check_auth`, which today are checked only at simulation.
 
 ## License
 
