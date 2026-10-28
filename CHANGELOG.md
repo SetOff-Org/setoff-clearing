@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-28
+
 ### Added
 
 - Contract-account debtors (smart wallets with their own `__check_auth`) are
@@ -14,7 +16,6 @@ All notable changes to this project are documented here. The format follows
   refused signature is rejected with the network's reason (422) if the
   request brought it, or cleared with the reason in `GET …/authorizations`'s
   new `error` field, keeping the accounts' valid signatures.
-
 - On-chain settlement from the service: with `[settlement]`, closed windows
   are simulated against the settlement contract, debtors fetch and return
   their Soroban authorization entries over
@@ -60,5 +61,6 @@ All notable changes to this project are documented here. The format follows
   act as each other.
 - Each submission re-netted the whole window; validation is now constant time.
 
-[Unreleased]: https://github.com/SetOff-Org/setoff-clearing/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/SetOff-Org/setoff-clearing/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/SetOff-Org/setoff-clearing/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/SetOff-Org/setoff-clearing/releases/tag/v0.1.0
