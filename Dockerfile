@@ -4,7 +4,7 @@
 #     -p 7500:7500 ghcr.io/setoff-org/setoff
 #
 # /etc/setoff holds setoff.toml and its data_dir. Set listen = "0.0.0.0:7500".
-FROM golang:1.25 AS build
+FROM golang:1.27 AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
